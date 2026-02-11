@@ -1,4 +1,9 @@
 const STALE_PRESENCE_MS = 90000;
+const parsePresenceTimestamp = (value) => {
+  if (!value) return 0;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
 
 export const buildActiveUsersFromState = (state) => {
   const now = Date.now();
@@ -8,7 +13,8 @@ export const buildActiveUsersFromState = (state) => {
   for (const key in state) {
     const presences = state[key];
     presences.forEach((presence) => {
-      const onlineAt = presence.online_at ? new Date(presence.online_at).getTime() : 0;
+      const onlineAt = parsePresenceTimestamp(presence.online_at);
+      if (!onlineAt) return;
       if (now - onlineAt > STALE_PRESENCE_MS) return;
 
       const groupKey = presence.user_id || presence.user_name;
@@ -21,13 +27,15 @@ export const buildActiveUsersFromState = (state) => {
           count: 0,
           latestDate: null,
           latestJoin: null,
+          latestJoinTs: 0,
           session: null,
         };
       }
 
       userSessions[groupKey].count++;
 
-      if (!userSessions[groupKey].latestJoin || presence.online_at > userSessions[groupKey].latestJoin) {
+      if (!userSessions[groupKey].latestJoinTs || onlineAt > userSessions[groupKey].latestJoinTs) {
+        userSessions[groupKey].latestJoinTs = onlineAt;
         userSessions[groupKey].latestJoin = presence.online_at;
         userSessions[groupKey].latestDate = presence.current_date;
         userSessions[groupKey].session = key;

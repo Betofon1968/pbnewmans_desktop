@@ -56,6 +56,9 @@ export const setupPresenceTracking = ({
   let closeRecoveryTimer = null;
   let lastPresenceStatus = 'INIT';
   let reconnectBackoffMs = 60000;
+  let setupEpoch = 0;
+  let reconnectGeneration = 0;
+  const transientTimeouts = new Set();
   let disposed = false;
 
   const clearFallbackTimer = () => {
@@ -87,6 +90,7 @@ export const setupPresenceTracking = ({
   };
 
   const clearReconnectTimer = () => {
+    reconnectGeneration++;
     if (reconnectTimer) {
       clearTimeout(reconnectTimer);
       reconnectTimer = null;
@@ -121,6 +125,20 @@ export const setupPresenceTracking = ({
     }
   };
 
+  const clearTransientTimeouts = () => {
+    transientTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+    transientTimeouts.clear();
+  };
+
+  const scheduleTransientTimeout = (callback, delayMs) => {
+    const timeoutId = setTimeout(() => {
+      transientTimeouts.delete(timeoutId);
+      callback();
+    }, delayMs);
+    transientTimeouts.add(timeoutId);
+    return timeoutId;
+  };
+
   const clearRuntimeTimers = ({ keepReconnectTimer = false } = {}) => {
     clearFallbackTimer();
     clearSubscriptionTimeout();
@@ -130,6 +148,7 @@ export const setupPresenceTracking = ({
     clearCloseGraceTimer();
     clearStableTimer();
     clearCloseRecoveryTimer();
+    clearTransientTimeouts();
     if (!keepReconnectTimer) clearReconnectTimer();
   };
 
@@ -145,10 +164,12 @@ export const setupPresenceTracking = ({
     if (reconnectTimer) return;
     if (isLoggingOutRef.current) return;
 
+    const thisGeneration = reconnectGeneration;
     const delay = reconnectBackoffMs + Math.floor(Math.random() * 3000);
     syncLog(`⚠ Presence degraded (${reason}). Will retry in ${Math.round(delay / 1000)}s`);
 
     reconnectTimer = setTimeout(() => {
+      if (thisGeneration !== reconnectGeneration) return;
       reconnectTimer = null;
       if (disposed) return;
       if (isLoggingOutRef.current) return;
@@ -156,6 +177,7 @@ export const setupPresenceTracking = ({
         const deferredDelay = 15000 + Math.floor(Math.random() * 2000);
         syncLog(`📡 Presence recovery deferred (online=${navigator.onLine}, visible=${document.visibilityState === 'visible'}). Retrying in ${Math.round(deferredDelay / 1000)}s`);
         reconnectTimer = setTimeout(() => {
+          if (thisGeneration !== reconnectGeneration) return;
           reconnectTimer = null;
           if (disposed || isLoggingOutRef.current) return;
           schedulePresenceReconnect('deferred retry');
@@ -239,7 +261,9 @@ export const setupPresenceTracking = ({
   const setupPresence = () => {
     if (disposed) return;
     currentSetupId++;
+    setupEpoch++;
     const thisSetupId = currentSetupId;
+    const thisSetupEpoch = setupEpoch;
     hasGivenUp = false;
     hasTrackedOnceRef.current = false;
     clearRuntimeTimers({ keepReconnectTimer: true });
@@ -249,9 +273,10 @@ export const setupPresenceTracking = ({
     const channel = supabase.channel('online-users', { config: { presence: { key: sessionId.current } } });
     presenceChannelRef.current = channel;
 
-    subscriptionTimeout = setTimeout(() => {
+    const thisSubscriptionTimeout = setTimeout(() => {
+      if (subscriptionTimeout !== thisSubscriptionTimeout) return;
       subscriptionTimeout = null;
-      if (thisSetupId !== currentSetupId) return;
+      if (thisSetupId !== currentSetupId || thisSetupEpoch !== setupEpoch) return;
       if (disposed) return;
       console.warn('Presence subscription timeout, retrying...');
 
@@ -270,6 +295,7 @@ export const setupPresenceTracking = ({
         schedulePresenceReconnect('subscription timeout');
       }
     }, 10000);
+    subscriptionTimeout = thisSubscriptionTimeout;
 
     channel
       .on('presence', { event: 'sync' }, () => {
@@ -279,7 +305,7 @@ export const setupPresenceTracking = ({
       })
       .on('presence', { event: 'join' }, () => {
         if (thisSetupId !== currentSetupId) return;
-        setTimeout(() => {
+        scheduleTransientTimeout(() => {
           if (thisSetupId !== currentSetupId) return;
           const state = channel.presenceState();
           setActiveUsers(buildActiveUsersFromState(state));
@@ -287,7 +313,7 @@ export const setupPresenceTracking = ({
       })
       .on('presence', { event: 'leave' }, () => {
         if (thisSetupId !== currentSetupId) return;
-        setTimeout(() => {
+        scheduleTransientTimeout(() => {
           if (thisSetupId !== currentSetupId) return;
           const state = channel.presenceState();
           setActiveUsers(buildActiveUsersFromState(state));
@@ -295,7 +321,8 @@ export const setupPresenceTracking = ({
       })
       .subscribe(async (status) => {
         if (disposed) return;
-        if (thisSetupId !== currentSetupId) return;
+        if (thisSetupId !== currentSetupId || thisSetupEpoch !== setupEpoch) return;
+        if (channel !== presenceChannelRef.current) return;
 
         syncLog('Presence subscription status:', status);
         lastPresenceStatus = status;
@@ -308,6 +335,7 @@ export const setupPresenceTracking = ({
           clearCloseGraceTimer();
           clearStableTimer();
           clearCloseRecoveryTimer();
+          clearReconnectTimer();
           hasGivenUp = false;
           trackFailStreak = 0;
           retryCount = 0;

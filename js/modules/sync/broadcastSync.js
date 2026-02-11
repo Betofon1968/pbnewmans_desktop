@@ -22,8 +22,23 @@ export const setupRouteBroadcastSync = ({
 }) => {
   const pendingReloadTimersByDate = new Map();
   const pendingReloadMetaByDate = new Map();
+  const serverUpdateExitTimers = new Set();
   const appliedRealtimeRef = lastAppliedRealtimeAtByDateRef || { current: {} };
   const rowRealtimeRef = lastRowRealtimeAtByDateRef || { current: {} };
+  let disposed = false;
+
+  const scheduleExitServerUpdate = (delayMs = 300) => {
+    const timerId = setTimeout(() => {
+      serverUpdateExitTimers.delete(timerId);
+      if (disposed) return;
+      try {
+        exitServerUpdate();
+      } catch (err) {
+        console.error('exitServerUpdate failed:', err);
+      }
+    }, delayMs);
+    serverUpdateExitTimers.add(timerId);
+  };
 
   const applyRouteDateSnapshot = (routeDate, loadedRoutes, reason) => {
     const now = Date.now();
@@ -40,7 +55,7 @@ export const setupRouteBroadcastSync = ({
         setRoutesByDate((prev) => ({ ...prev, [routeDate]: loadedRoutes }));
         setDateRouteCounts((prev) => ({ ...prev, [routeDate]: loadedRoutes.length }));
       } finally {
-        setTimeout(() => exitServerUpdate(), 300);
+        scheduleExitServerUpdate(300);
       }
     } else {
       setRoutesByDate((prev) => ({ ...prev, [routeDate]: loadedRoutes }));
@@ -143,9 +158,12 @@ export const setupRouteBroadcastSync = ({
   updateChannelRef.current = updateChannel;
 
   return () => {
+    disposed = true;
     pendingReloadTimersByDate.forEach((timerId) => clearTimeout(timerId));
     pendingReloadTimersByDate.clear();
     pendingReloadMetaByDate.clear();
+    serverUpdateExitTimers.forEach((timerId) => clearTimeout(timerId));
+    serverUpdateExitTimers.clear();
     if (deleteChannelRef.current) supabase.removeChannel(deleteChannelRef.current);
     if (updateChannelRef.current) supabase.removeChannel(updateChannelRef.current);
   };

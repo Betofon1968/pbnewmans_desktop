@@ -12,6 +12,10 @@ export function createRouteMutationsHandlers({
   lastEditTime,
   markFieldDirty
 }) {
+  const EDIT_TRACKING_TTL_MS = 120000;
+  const EDIT_TRACKING_SWEEP_MS = 30000;
+  let lastEditSweepAt = 0;
+
   const updatePallet = (routeId, storeId, palletIndex, value) => {
     hasPendingChanges.current = true;
     lastInteractionTime.current = Date.now();
@@ -21,12 +25,15 @@ export function createRouteMutationsHandlers({
     lastEditTime.current[storeKey] = Date.now();
 
     const now = Date.now();
-    Object.keys(lastEditTime.current).forEach((key) => {
-      if (now - lastEditTime.current[key] > 10000) {
-        editedStores.current.delete(key);
-        delete lastEditTime.current[key];
-      }
-    });
+    if (now - lastEditSweepAt >= EDIT_TRACKING_SWEEP_MS) {
+      Object.keys(lastEditTime.current).forEach((key) => {
+        if (now - lastEditTime.current[key] > EDIT_TRACKING_TTL_MS) {
+          editedStores.current.delete(key);
+          delete lastEditTime.current[key];
+        }
+      });
+      lastEditSweepAt = now;
+    }
 
     const lowerVal = typeof value === 'string' ? value.toLowerCase().trim() : '';
     const isPending = value === '?' || lowerVal === 'p' || lowerVal === 'plt';
