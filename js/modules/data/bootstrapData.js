@@ -1,4 +1,4 @@
-import {setupConfigRealtimeSync} from '../sync/networkSync.js?v=26.106';
+import {setupConfigRealtimeSync} from '../sync/networkSync.js?v=26.108';
 
 const mapRouteRowToClient = (route) => ({
   id: route.id,

@@ -1,39 +1,39 @@
-import OverviewTab from './tabs/OverviewTab.js?v=26.106';
-import DriversTab from './tabs/DriversTab.js?v=26.106';
-import StoresTab from './tabs/StoresTab.js?v=26.106';
-import TrucksTab from './tabs/TrucksTab.js?v=26.106';
-import AiLogisticsTab from './tabs/AiLogisticsTab.js?v=26.106';
-import AccountsTab from './tabs/AccountsTab.js?v=26.106';
-import ReportsTab from './tabs/ReportsTab.js?v=26.106';
-import SettingsTab from './tabs/SettingsTab.js?v=26.106';
-import {generateBOLDocument} from './modules/bol.js?v=26.106';
-import StatCard from './components/StatCard.js?v=26.106';
-import RouteCard from './components/RouteCard.js?v=26.106';
-import StoreSearchModal from './components/StoreSearchModal.js?v=26.106';
-import AppModals from './components/AppModals.js?v=26.106';
-import AppModalsSecondary from './components/AppModalsSecondary.js?v=26.106';
-import AppModalsTertiary from './components/AppModalsTertiary.js?v=26.106';
-import {initialRoutes,MAX_PALLETS,MIN_PALLETS,defaultDriverColors,initialStoresDirectory,initialDriversDirectory,initialTrucksDirectory,truckZones,truckMakes,truckStatuses,trailerMakes,trailerTypes,states,trailerSizes,licenseTypes,driverStatuses,rolePermissions,initialPalletTypes} from './modules/constants.js?v=26.106';
-import AuthScreen from './modules/auth/AuthScreen.js?v=26.106';
-import PasswordResetScreen from './modules/auth/PasswordResetScreen.js?v=26.106';
-import {initializeAuthSession} from './modules/auth/session.js?v=26.106';
-import {buildActiveUsersFromState as buildActiveUsersFromPresence} from './modules/sync/activeUsers.js?v=26.106';
-import {mapRouteRecordToClientRoute} from './modules/sync/routeMapper.js?v=26.106';
-import {setupRouteBroadcastSync} from './modules/sync/broadcastSync.js?v=26.106';
-import {setupDateRoutesSync} from './modules/sync/dateRoutesSync.js?v=26.106';
-import {setupPresenceTracking,syncPresenceDate} from './modules/sync/presenceSync.js?v=26.106';
-import {setupOnlineOfflineSync} from './modules/sync/networkSync.js?v=26.106';
-import {saveLocalBackupToStorage,restoreFromLocalBackup,exportBackupJson,saveToSupabasePipeline,setupDebouncedSave} from './modules/sync/persistenceSync.js?v=26.106';
-import {createRouteCrudHandlers} from './modules/routes/routeCrud.js?v=26.106';
-import {createRouteStoreOpsHandlers} from './modules/routes/routeStoreOps.js?v=26.106';
-import {createRouteMutationsHandlers} from './modules/routes/routeMutations.js?v=26.106';
-import {setupBootstrapData} from './modules/data/bootstrapData.js?v=26.106';
-import {logActivityEntry,loadActivityLogEntries} from './modules/activity/activityLog.js?v=26.106';
-import {loadInvoiceRoutesForRange,calculateInvoiceDataFromRoutes} from './modules/invoices/invoiceService.js?v=26.106';
-import {getTodayInTimezoneValue,getTomorrowInTimezoneValue,isFutureDateInTimezone} from './modules/time/dateUtils.js?v=26.106';
-import {findCurrentUserData,buildEffectivePermissions,canAccessTabByPermissions,canEditTabByPermissions,canPerformActionByPermissions} from './modules/security/permissions.js?v=26.106';
-import {getWeekDatesForDate,formatDateDisplayValue,formatDayNameShort,formatDayNumberValue,formatPhoneNumberValue,formatCurrencyValue,escapeHtmlValue,isDateTodayInTimezone,getNavigatedWeekDate} from './modules/utils/formatters.js?v=26.106';
-import {parseCsvText} from './modules/utils/csv.js?v=26.106';
+import OverviewTab from './tabs/OverviewTab.js?v=26.108';
+import DriversTab from './tabs/DriversTab.js?v=26.108';
+import StoresTab from './tabs/StoresTab.js?v=26.108';
+import TrucksTab from './tabs/TrucksTab.js?v=26.108';
+import AiLogisticsTab from './tabs/AiLogisticsTab.js?v=26.108';
+import AccountsTab from './tabs/AccountsTab.js?v=26.108';
+import ReportsTab from './tabs/ReportsTab.js?v=26.108';
+import SettingsTab from './tabs/SettingsTab.js?v=26.108';
+import {generateBOLDocument} from './modules/bol.js?v=26.108';
+import StatCard from './components/StatCard.js?v=26.108';
+import RouteCard from './components/RouteCard.js?v=26.108';
+import StoreSearchModal from './components/StoreSearchModal.js?v=26.108';
+import AppModals from './components/AppModals.js?v=26.108';
+import AppModalsSecondary from './components/AppModalsSecondary.js?v=26.108';
+import AppModalsTertiary from './components/AppModalsTertiary.js?v=26.108';
+import {initialRoutes,MAX_PALLETS,MIN_PALLETS,defaultDriverColors,initialStoresDirectory,initialDriversDirectory,initialTrucksDirectory,truckZones,truckMakes,truckStatuses,trailerMakes,trailerTypes,states,trailerSizes,licenseTypes,driverStatuses,rolePermissions,initialPalletTypes} from './modules/constants.js?v=26.108';
+import AuthScreen from './modules/auth/AuthScreen.js?v=26.108';
+import PasswordResetScreen from './modules/auth/PasswordResetScreen.js?v=26.108';
+import {initializeAuthSession} from './modules/auth/session.js?v=26.108';
+import {buildActiveUsersFromState as buildActiveUsersFromPresence} from './modules/sync/activeUsers.js?v=26.108';
+import {mapRouteRecordToClientRoute} from './modules/sync/routeMapper.js?v=26.108';
+import {setupRouteBroadcastSync} from './modules/sync/broadcastSync.js?v=26.108';
+import {setupDateRoutesSync} from './modules/sync/dateRoutesSync.js?v=26.108';
+import {setupPresenceTracking,syncPresenceDate} from './modules/sync/presenceSync.js?v=26.108';
+import {setupOnlineOfflineSync} from './modules/sync/networkSync.js?v=26.108';
+import {saveLocalBackupToStorage,restoreFromLocalBackup,exportBackupJson,saveToSupabasePipeline,setupDebouncedSave} from './modules/sync/persistenceSync.js?v=26.108';
+import {createRouteCrudHandlers} from './modules/routes/routeCrud.js?v=26.108';
+import {createRouteStoreOpsHandlers} from './modules/routes/routeStoreOps.js?v=26.108';
+import {createRouteMutationsHandlers} from './modules/routes/routeMutations.js?v=26.108';
+import {setupBootstrapData} from './modules/data/bootstrapData.js?v=26.108';
+import {logActivityEntry,loadActivityLogEntries} from './modules/activity/activityLog.js?v=26.108';
+import {loadInvoiceRoutesForRange,calculateInvoiceDataFromRoutes} from './modules/invoices/invoiceService.js?v=26.108';
+import {getTodayInTimezoneValue,getTomorrowInTimezoneValue,isFutureDateInTimezone} from './modules/time/dateUtils.js?v=26.108';
+import {findCurrentUserData,buildEffectivePermissions,canAccessTabByPermissions,canEditTabByPermissions,canPerformActionByPermissions} from './modules/security/permissions.js?v=26.108';
+import {getWeekDatesForDate,formatDateDisplayValue,formatDayNameShort,formatDayNumberValue,formatPhoneNumberValue,formatCurrencyValue,escapeHtmlValue,isDateTodayInTimezone,getNavigatedWeekDate} from './modules/utils/formatters.js?v=26.108';
+import {parseCsvText} from './modules/utils/csv.js?v=26.108';
 
 // ╔╗
 // ║  SECTION 1: CONFIGURATION & SETUP                                             ║
@@ -48,7 +48,7 @@ if(window.__authUnhandledRejectionHandler){window.removeEventListener('unhandled
 supabase.auth.signOut().catch(()=>{});}};window.addEventListener('unhandledrejection',window.__authUnhandledRejectionHandler);// ─────────────────────────────────────────────────────────────────────────────
 // APP VERSION - Update this when deploying new versions
 // ─────────────────────────────────────────────────────────────────────────────
-const APP_VERSION='26.106';const APP_BUILD_DATE='2026-01-23';const IS_BETA_BUILD=true;window.APP_VERSION=APP_VERSION;window.APP_BUILD_DATE=APP_BUILD_DATE;window.APP_IS_BETA=IS_BETA_BUILD;const deferredCacheWrite=(key,data)=>{const doWrite=()=>{try{localStorage.setItem(key,typeof data==='string'?data:JSON.stringify(data));}catch(e){console.warn('Cache write error:',e);}};if('requestIdleCallback' in window){requestIdleCallback(doWrite,{timeout:2000});}else{setTimeout(doWrite,0);}};// ─────────────────────────────────────────────────────────────────────────────
+const APP_VERSION='26.108';const APP_BUILD_DATE='2026-01-23';const IS_BETA_BUILD=true;window.APP_VERSION=APP_VERSION;window.APP_BUILD_DATE=APP_BUILD_DATE;window.APP_IS_BETA=IS_BETA_BUILD;const deferredCacheWrite=(key,data)=>{const doWrite=()=>{try{localStorage.setItem(key,typeof data==='string'?data:JSON.stringify(data));}catch(e){console.warn('Cache write error:',e);}};if('requestIdleCallback' in window){requestIdleCallback(doWrite,{timeout:2000});}else{setTimeout(doWrite,0);}};// ─────────────────────────────────────────────────────────────────────────────
 // SENTRY ERROR MONITORING - Added v1.997
 // ─────────────────────────────────────────────────────────────────────────────
 // IMPORTANT: Sentry DSN configured for Elite Cold Storage
