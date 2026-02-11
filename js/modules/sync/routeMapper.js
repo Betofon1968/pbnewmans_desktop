@@ -1,0 +1,15 @@
+export const mapRouteRecordToClientRoute = (route) => ({
+  id: route.id,
+  name: route.driver ? `${route.driver} #${route.route_order + 1}` : `Route ${route.route_order + 1}`,
+  driver: route.driver,
+  truck: route.truck,
+  trailer: route.trailer,
+  stores: route.stores || [],
+  palletCount: route.pallet_count || 8,
+  confirmed: route.confirmed,
+  confirmedBy: route.confirmed_by,
+  confirmedAt: route.confirmed_at,
+  pickupAtPB: route.pickup_at_pb || false,
+  route_order: route.route_order,
+  updated_at: route.updated_at,
+});

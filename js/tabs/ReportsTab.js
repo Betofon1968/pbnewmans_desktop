@@ -1,0 +1,294 @@
+export default function ReportsTab(props){
+  const {
+    React,
+    supabase,
+    $,
+    Analysis,
+    Arial,
+    Avg,
+    Cases,
+    Code,
+    Count,
+    Dashboard,
+    Delivered,
+    Deliveries,
+    Delivery,
+    Driver,
+    Logistics,
+    Metric,
+    Name,
+    Newmans,
+    Overview,
+    PLT,
+    Pallet,
+    Pallets,
+    Percentage,
+    Performance,
+    Refrigerated,
+    Report,
+    Route,
+    Routes,
+    Service,
+    Store,
+    Stores,
+    Summary,
+    TOTAL,
+    TOTALS,
+    Total,
+    Type,
+    Value,
+    a,
+    a7f4b,
+    b,
+    body,
+    bolSettings,
+    bold,
+    border,
+    by,
+    cards,
+    center,
+    code,
+    collapse,
+    colspan,
+    dailyData,
+    data,
+    date,
+    dateRoutes,
+    ddd,
+    delivered,
+    deliveries,
+    dirStore,
+    div,
+    driver,
+    driverData,
+    e,
+    f5f5f5,
+    flex,
+    font,
+    h1,
+    h2,
+    head,
+    html,
+    i,
+    label,
+    left,
+    margin,
+    media,
+    min,
+    monthAgo,
+    normalized,
+    p,
+    palletTypes,
+    palletsByType,
+    prev,
+    print,
+    printContent,
+    pt,
+    px,
+    r,
+    reportDateRange,
+    reportsSubTab,
+    route,
+    routesByDate,
+    routesInRange,
+    s,
+    sans,
+    serif,
+    setReportDateRange,
+    setReportsSubTab,
+    solid,
+    store,
+    storeFrequency,
+    stores,
+    storesDirectory,
+    strong,
+    style,
+    subTab,
+    sum,
+    table,
+    td,
+    text,
+    th,
+    title,
+    to,
+    today,
+    todayStr,
+    total,
+    totalCases,
+    totalPallets,
+    totalRoutes,
+    totalStores,
+    tr,
+    type,
+    types,
+    val,
+    value,
+    weekAgo,
+    wrap,
+    escapeHtml,
+  } = props.app;
+  const escapePrint = (value) => {
+    if (typeof escapeHtml === 'function') return escapeHtml(value);
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+  return /*#__PURE__*/React.createElement("div",{style:{padding:'20px 32px'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',gap:'8px',marginBottom:'20px',flexWrap:'wrap'}},['Daily Summary','Driver Performance','Store Reports','Pallet Analysis','Export Center'].map(subTab=>/*#__PURE__*/React.createElement("button",{key:subTab,onClick:()=>setReportsSubTab(subTab),style:{background:reportsSubTab===subTab?'#1a7f4b':'white',color:reportsSubTab===subTab?'white':'#333',border:'1px solid #ddd',borderRadius:'6px',padding:'10px 20px',cursor:'pointer',fontSize:'14px',fontWeight:500}},subTab==='Daily Summary'&&'📊 ',subTab==='Driver Performance'&&'👤 ',subTab==='Store Reports'&&' ',subTab==='Pallet Analysis'&&'📦 ',subTab==='Export Center'&&'📥 ',subTab))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',padding:'16px 20px',marginBottom:'20px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',display:'flex',alignItems:'center',gap:'16px',flexWrap:'wrap'}},/*#__PURE__*/React.createElement("span",{style:{fontWeight:500,color:'#333'}},"\uD83D\uDCC5 Date Range:"),/*#__PURE__*/React.createElement("input",{type:"date",value:reportDateRange.start,onChange:e=>setReportDateRange(prev=>({...prev,start:e.target.value})),style:{padding:'8px 12px',border:'1px solid #ddd',borderRadius:'6px',fontSize:'14px'}}),/*#__PURE__*/React.createElement("span",{style:{color:'#666'}},"to"),/*#__PURE__*/React.createElement("input",{type:"date",value:reportDateRange.end,onChange:e=>setReportDateRange(prev=>({...prev,end:e.target.value})),style:{padding:'8px 12px',border:'1px solid #ddd',borderRadius:'6px',fontSize:'14px'}}),/*#__PURE__*/React.createElement("div",{style:{display:'flex',gap:'8px'}},/*#__PURE__*/React.createElement("button",{onClick:()=>{const today=new Date();const todayStr=today.toLocaleDateString('en-CA');setReportDateRange({start:todayStr,end:todayStr});},style:{padding:'8px 12px',border:'1px solid #ddd',borderRadius:'6px',background:'#f5f5f5',cursor:'pointer',fontSize:'12px'}},"Today"),/*#__PURE__*/React.createElement("button",{onClick:()=>{const today=new Date();const weekAgo=new Date(today);weekAgo.setDate(weekAgo.getDate()-7);setReportDateRange({start:weekAgo.toLocaleDateString('en-CA'),end:today.toLocaleDateString('en-CA')});},style:{padding:'8px 12px',border:'1px solid #ddd',borderRadius:'6px',background:'#f5f5f5',cursor:'pointer',fontSize:'12px'}},"Last 7 Days"),/*#__PURE__*/React.createElement("button",{onClick:()=>{const today=new Date();const monthAgo=new Date(today);monthAgo.setDate(monthAgo.getDate()-30);setReportDateRange({start:monthAgo.toLocaleDateString('en-CA'),end:today.toLocaleDateString('en-CA')});},style:{padding:'8px 12px',border:'1px solid #ddd',borderRadius:'6px',background:'#f5f5f5',cursor:'pointer',fontSize:'12px'}},"Last 30 Days"))),(()=>{// Get all routes in date range
+const routesInRange=Object.entries(routesByDate).filter(([date])=>date>=reportDateRange.start&&date<=reportDateRange.end).flatMap(([date,dateRoutes])=>dateRoutes.map(r=>({...r,date})));// Calculate report data
+const totalRoutes=routesInRange.length;const totalStores=routesInRange.reduce((sum,r)=>sum+r.stores.length,0);const totalPallets=routesInRange.reduce((sum,r)=>sum+r.stores.reduce((s,store)=>s+(store.pallets||[]).filter(p=>typeof p==='number'&&p>0).length,0),0);const totalCases=routesInRange.reduce((sum,r)=>sum+r.stores.reduce((s,store)=>s+(store.tc||0),0),0);// Pallets by type
+const palletsByType={};palletTypes.forEach(pt=>{palletsByType[pt.abbrev]=0;});routesInRange.forEach(route=>{route.stores.forEach(store=>{const types=store.palletTypes||[];(store.pallets||[]).forEach((val,i)=>{if(typeof val==='number'&&val>0){const type=types[i]||'FZ';const normalized=type==='F'?'FZ':type==='D'?'DR':type==='S'?'SP':type;if(palletsByType.hasOwnProperty(normalized)){palletsByType[normalized]++;}}});});});// Driver stats
+const driverData={};routesInRange.forEach(route=>{const driver=route.driver||'Unassigned';if(!driverData[driver]){driverData[driver]={routes:0,stores:0,pallets:0,cases:0};}driverData[driver].routes++;driverData[driver].stores+=route.stores.length;driverData[driver].pallets+=route.stores.reduce((s,store)=>s+(store.pallets||[]).filter(p=>typeof p==='number'&&p>0).length,0);driverData[driver].cases+=route.stores.reduce((s,store)=>s+(store.tc||0),0);});// Store frequency
+const storeFrequency={};routesInRange.forEach(route=>{route.stores.forEach(store=>{const code=store.code||'Unknown';if(!storeFrequency[code]){storeFrequency[code]={count:0,pallets:0,cases:0,name:store.name||''};}storeFrequency[code].count++;storeFrequency[code].pallets+=(store.pallets||[]).filter(p=>p>0).length;storeFrequency[code].cases+=store.tc||0;});});// Daily breakdown
+const dailyData={};routesInRange.forEach(route=>{if(!dailyData[route.date]){dailyData[route.date]={routes:0,stores:0,pallets:0,cases:0};}dailyData[route.date].routes++;dailyData[route.date].stores+=route.stores.length;dailyData[route.date].pallets+=route.stores.reduce((s,store)=>s+(store.pallets||[]).filter(p=>p>0).length,0);dailyData[route.date].cases+=route.stores.reduce((s,store)=>s+(store.tc||0),0);});return/*#__PURE__*/React.createElement(React.Fragment,null,reportsSubTab==='Daily Summary'&&/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{style:{display:'flex',justifyContent:'flex-end',marginBottom:'16px'}},/*#__PURE__*/React.createElement("button",{onClick:()=>{const printContent=`
+                            <html><head><title>Daily Summary Report - ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)}</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; padding: 20px; }
+                              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                              th { background: #f5f5f5; }
+                              h1 { color: #1a7f4b; margin-bottom: 5px; }
+                              .summary-cards { display: flex; gap: 20px; margin: 20px 0; }
+                              .card { border: 1px solid #ddd; padding: 15px 25px; border-radius: 8px; text-align: center; }
+                              .card-value { font-size: 28px; font-weight: bold; }
+                              .card-label { font-size: 12px; color: #666; }
+                              @media print { body { padding: 0; } }
+                            </style></head><body>
+                            <h1>📊 Daily Summary Report</h1>
+                            <p style="color: #666; margin-top: 0;">Date Range: ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)} | Generated: ${new Date().toLocaleString('en-US')}</p>
+                            
+                            <div class="summary-cards">
+                              <div class="card"><div class="card-value" style="color: #1a7f4b;">${totalRoutes}</div><div class="card-label">Total Routes</div></div>
+                              <div class="card"><div class="card-value" style="color: #2196f3;">${totalStores}</div><div class="card-label">Stores Delivered</div></div>
+                              <div class="card"><div class="card-value" style="color: #ff9800;">${totalPallets}</div><div class="card-label">Total Pallets</div></div>
+                              <div class="card"><div class="card-value" style="color: #9c27b0;">${totalCases.toLocaleString()}</div><div class="card-label">Total Cases</div></div>
+                            </div>
+                            
+                            <h2>📅 Daily Breakdown</h2>
+                            <table>
+                              <tr><th>Date</th><th>Routes</th><th>Stores</th><th>Pallets</th><th>Cases</th><th>Avg PLT/Route</th></tr>
+                              ${Object.entries(dailyData).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,data])=>`<tr><td>${new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</td><td style="text-align:center">${data.routes}</td><td style="text-align:center">${data.stores}</td><td style="text-align:center">${data.pallets}</td><td style="text-align:center">${data.cases.toLocaleString()}</td><td style="text-align:center">${data.routes>0?(data.pallets/data.routes).toFixed(1):'-'}</td></tr>`).join('')}
+                              <tr style="font-weight: bold; background: #e8f5e9;"><td>TOTALS</td><td style="text-align:center">${totalRoutes}</td><td style="text-align:center">${totalStores}</td><td style="text-align:center">${totalPallets}</td><td style="text-align:center">${totalCases.toLocaleString()}</td><td style="text-align:center">${totalRoutes>0?(totalPallets/totalRoutes).toFixed(1):'-'}</td></tr>
+                            </table>
+                            
+                            <h2>📦 Pallets by Type</h2>
+                            <table>
+                              <tr><th>Type</th><th>Name</th><th>Count</th><th>Percentage</th></tr>
+                              ${palletTypes.filter(pt=>pt&&pt.abbrev).map(pt=>`<tr><td><strong>${escapePrint(pt.abbrev)}</strong></td><td>${escapePrint(pt.name)}</td><td style="text-align:center">${palletsByType[pt.abbrev]||0}</td><td style="text-align:center">${totalPallets>0?((palletsByType[pt.abbrev]||0)/totalPallets*100).toFixed(1):0}%</td></tr>`).join('')}
+                            </table>
+                            
+                            <p style="margin-top: 40px; font-size: 11px; color: #999; text-align: center;">${escapePrint(bolSettings.companyName)} - Logistics Dashboard</p>
+                            </body></html>
+                          `;const printWindow=window.open('','_blank');printWindow.document.write(printContent);printWindow.document.close();printWindow.print();},style:{background:'#333',color:'white',border:'none',borderRadius:'6px',padding:'10px 20px',cursor:'pointer',fontWeight:500,fontSize:'13px'}},"\uD83D\uDDA8\uFE0F Print Daily Summary")),/*#__PURE__*/React.createElement("div",{style:{display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:'16px',marginBottom:'24px'}},/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',padding:'20px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',borderLeft:'4px solid #1a7f4b'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666',marginBottom:'4px'}},"Total Routes"),/*#__PURE__*/React.createElement("div",{style:{fontSize:'32px',fontWeight:700,color:'#1a7f4b'}},totalRoutes)),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',padding:'20px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',borderLeft:'4px solid #2196f3'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666',marginBottom:'4px'}},"Stores Delivered"),/*#__PURE__*/React.createElement("div",{style:{fontSize:'32px',fontWeight:700,color:'#2196f3'}},totalStores)),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',padding:'20px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',borderLeft:'4px solid #ff9800'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666',marginBottom:'4px'}},"Total Pallets"),/*#__PURE__*/React.createElement("div",{style:{fontSize:'32px',fontWeight:700,color:'#ff9800'}},totalPallets)),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',padding:'20px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',borderLeft:'4px solid #9c27b0'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666',marginBottom:'4px'}},"Total Cases"),/*#__PURE__*/React.createElement("div",{style:{fontSize:'32px',fontWeight:700,color:'#9c27b0'}},totalCases.toLocaleString()))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden',marginBottom:'24px'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDCC5 Daily Breakdown")),/*#__PURE__*/React.createElement("div",{style:{overflowX:'auto'}},/*#__PURE__*/React.createElement("table",{style:{width:'100%',borderCollapse:'collapse',fontSize:'13px'}},/*#__PURE__*/React.createElement("thead",null,/*#__PURE__*/React.createElement("tr",{style:{background:'#f5f5f5'}},/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'left',fontWeight:600}},"Date"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Routes"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Stores"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Pallets"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Cases"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Avg PLT/Route"))),/*#__PURE__*/React.createElement("tbody",null,Object.entries(dailyData).sort((a,b)=>b[0].localeCompare(a[0])).map(([date,data])=>/*#__PURE__*/React.createElement("tr",{key:date,style:{borderBottom:'1px solid #eee'}},/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',fontWeight:500}},new Date(date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},data.routes),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},data.stores),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600,color:'#ff9800'}},data.pallets),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},data.cases.toLocaleString()),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',color:'#666'}},data.routes>0?(data.pallets/data.routes).toFixed(1):'-'))),Object.keys(dailyData).length===0&&/*#__PURE__*/React.createElement("tr",null,/*#__PURE__*/React.createElement("td",{colSpan:"6",style:{padding:'40px',textAlign:'center',color:'#999'}},"No data for selected date range"))),Object.keys(dailyData).length>0&&/*#__PURE__*/React.createElement("tfoot",null,/*#__PURE__*/React.createElement("tr",{style:{background:'#e8f5e9',fontWeight:600}},/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px'}},"TOTALS"),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},totalRoutes),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},totalStores),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',color:'#ff9800'}},totalPallets),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},totalCases.toLocaleString()),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',color:'#666'}},totalRoutes>0?(totalPallets/totalRoutes).toFixed(1):'-')))))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDCE6 Pallets by Type")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px',display:'flex',gap:'16px',flexWrap:'wrap'}},palletTypes.filter(pt=>pt&&pt.abbrev).map(pt=>/*#__PURE__*/React.createElement("div",{key:pt.id,style:{background:'#f5f5f5',borderRadius:'8px',padding:'16px 24px',minWidth:'100px',textAlign:'center',borderTop:'3px solid '+(pt.color||'#666')}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'24px',fontWeight:700,color:pt.color||'#666'}},palletsByType[pt.abbrev]||0),/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666',marginTop:'4px'}},pt.abbrev),/*#__PURE__*/React.createElement("div",{style:{fontSize:'10px',color:'#999'}},pt.name)))))),reportsSubTab==='Driver Performance'&&/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{style:{display:'flex',justifyContent:'flex-end',marginBottom:'16px'}},/*#__PURE__*/React.createElement("button",{onClick:()=>{const printContent=`
+                            <html><head><title>Driver Performance Report - ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)}</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; padding: 20px; }
+                              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                              th { background: #f5f5f5; }
+                              h1 { color: #1a7f4b; margin-bottom: 5px; }
+                              @media print { body { padding: 0; } }
+                            </style></head><body>
+                            <h1>👤 Driver Performance Report</h1>
+                            <p style="color: #666; margin-top: 0;">Date Range: ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)} | Generated: ${new Date().toLocaleString('en-US')}</p>
+                            
+                            <table>
+                              <tr><th>Driver</th><th style="text-align:center">Routes</th><th style="text-align:center">Stores</th><th style="text-align:center">Pallets</th><th style="text-align:center">Cases</th><th style="text-align:center">Avg Stores/Route</th><th style="text-align:center">Avg PLT/Route</th></tr>
+                              ${Object.entries(driverData).sort((a,b)=>b[1].routes-a[1].routes).map(([driver,data])=>`<tr><td><strong>${escapePrint(driver)}</strong></td><td style="text-align:center">${data.routes}</td><td style="text-align:center">${data.stores}</td><td style="text-align:center">${data.pallets}</td><td style="text-align:center">${data.cases.toLocaleString()}</td><td style="text-align:center">${data.routes>0?(data.stores/data.routes).toFixed(1):'-'}</td><td style="text-align:center">${data.routes>0?(data.pallets/data.routes).toFixed(1):'-'}</td></tr>`).join('')}
+                              <tr style="font-weight: bold; background: #e8f5e9;"><td>TOTALS</td><td style="text-align:center">${totalRoutes}</td><td style="text-align:center">${totalStores}</td><td style="text-align:center">${totalPallets}</td><td style="text-align:center">${totalCases.toLocaleString()}</td><td style="text-align:center">-</td><td style="text-align:center">${totalRoutes>0?(totalPallets/totalRoutes).toFixed(1):'-'}</td></tr>
+                            </table>
+                            
+                            <p style="margin-top: 40px; font-size: 11px; color: #999; text-align: center;">${escapePrint(bolSettings.companyName)} - Logistics Dashboard</p>
+                            </body></html>
+                          `;const printWindow=window.open('','_blank');printWindow.document.write(printContent);printWindow.document.close();printWindow.print();},style:{background:'#333',color:'white',border:'none',borderRadius:'6px',padding:'10px 20px',cursor:'pointer',fontWeight:500,fontSize:'13px'}},"\uD83D\uDDA8\uFE0F Print Driver Report")),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDC64 Driver Performance Summary")),/*#__PURE__*/React.createElement("div",{style:{overflowX:'auto'}},/*#__PURE__*/React.createElement("table",{style:{width:'100%',borderCollapse:'collapse',fontSize:'13px'}},/*#__PURE__*/React.createElement("thead",null,/*#__PURE__*/React.createElement("tr",{style:{background:'#f5f5f5'}},/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'left',fontWeight:600}},"Driver"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Routes"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Stores"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Pallets"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Cases"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Avg Stores/Route"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Avg PLT/Route"))),/*#__PURE__*/React.createElement("tbody",null,Object.entries(driverData).sort((a,b)=>b[1].routes-a[1].routes).map(([driver,data])=>/*#__PURE__*/React.createElement("tr",{key:driver,style:{borderBottom:'1px solid #eee'}},/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',fontWeight:500}},/*#__PURE__*/React.createElement("span",{style:{display:'inline-block',width:'32px',height:'32px',borderRadius:'50%',background:'#1a7f4b',color:'white',textAlign:'center',lineHeight:'32px',marginRight:'10px',fontSize:'14px',fontWeight:600}},driver.charAt(0)),driver),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600,color:'#1a7f4b'}},data.routes),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},data.stores),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600,color:'#ff9800'}},data.pallets),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},data.cases.toLocaleString()),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',color:'#666'}},data.routes>0?(data.stores/data.routes).toFixed(1):'-'),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',color:'#666'}},data.routes>0?(data.pallets/data.routes).toFixed(1):'-'))),Object.keys(driverData).length===0&&/*#__PURE__*/React.createElement("tr",null,/*#__PURE__*/React.createElement("td",{colSpan:"7",style:{padding:'40px',textAlign:'center',color:'#999'}},"No data for selected date range")))))),Object.keys(driverData).length>0&&/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden',marginTop:'24px'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDCCA Pallets by Driver")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px'}},Object.entries(driverData).sort((a,b)=>b[1].pallets-a[1].pallets).map(([driver,data])=>{const maxPallets=Math.max(...Object.values(driverData).map(d=>d.pallets));const percentage=maxPallets>0?data.pallets/maxPallets*100:0;return/*#__PURE__*/React.createElement("div",{key:driver,style:{marginBottom:'12px'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',justifyContent:'space-between',marginBottom:'4px'}},/*#__PURE__*/React.createElement("span",{style:{fontWeight:500}},driver),/*#__PURE__*/React.createElement("span",{style:{color:'#666'}},data.pallets," pallets")),/*#__PURE__*/React.createElement("div",{style:{background:'#e0e0e0',borderRadius:'4px',height:'24px',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{background:'linear-gradient(90deg, #1a7f4b, #4caf50)',height:'100%',width:percentage+'%',borderRadius:'4px',transition:'width 0.3s ease'}})));})))),reportsSubTab==='Store Reports'&&/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{style:{display:'flex',justifyContent:'flex-end',marginBottom:'16px'}},/*#__PURE__*/React.createElement("button",{onClick:()=>{const printContent=`
+                            <html><head><title>Store Report - ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)}</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; padding: 20px; }
+                              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                              th { background: #f5f5f5; }
+                              h1 { color: #1a7f4b; margin-bottom: 5px; }
+                              @media print { body { padding: 0; } }
+                            </style></head><body>
+                            <h1> Store Delivery Report</h1>
+                            <p style="color: #666; margin-top: 0;">Date Range: ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)} | Generated: ${new Date().toLocaleString('en-US')}</p>
+                            <p><strong>${Object.keys(storeFrequency).length}</strong> stores delivered | <strong>${totalStores}</strong> total deliveries</p>
+                            
+                            <table>
+                              <tr><th>Store Code</th><th>Store Name</th><th style="text-align:center">Deliveries</th><th style="text-align:center">Total Pallets</th><th style="text-align:center">Total Cases</th><th style="text-align:center">Avg PLT/Delivery</th></tr>
+                              ${Object.entries(storeFrequency).sort((a,b)=>b[1].count-a[1].count).map(([code,data])=>{const dirStore=storesDirectory.find(s=>String(s.code||'').trim()===String(code||'').trim());return`<tr><td><strong>${escapePrint(code)}</strong></td><td>${escapePrint(dirStore?.name||data.name||'-')}</td><td style="text-align:center">${data.count}</td><td style="text-align:center">${data.pallets}</td><td style="text-align:center">${data.cases.toLocaleString()}</td><td style="text-align:center">${data.count>0?(data.pallets/data.count).toFixed(1):'-'}</td></tr>`;}).join('')}
+                            </table>
+                            
+                            <p style="margin-top: 40px; font-size: 11px; color: #999; text-align: center;">${escapePrint(bolSettings.companyName)} - Logistics Dashboard</p>
+                            </body></html>
+                          `;const printWindow=window.open('','_blank');printWindow.document.write(printContent);printWindow.document.close();printWindow.print();},style:{background:'#333',color:'white',border:'none',borderRadius:'6px',padding:'10px 20px',cursor:'pointer',fontWeight:500,fontSize:'13px'}},"\uD83D\uDDA8\uFE0F Print Store Report")),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83C\uDFEA Store Delivery Frequency"),/*#__PURE__*/React.createElement("p",{style:{margin:'4px 0 0',fontSize:'12px',color:'#666'}},"Stores sorted by delivery count")),/*#__PURE__*/React.createElement("div",{style:{overflowX:'auto',maxHeight:'500px',overflowY:'auto'}},/*#__PURE__*/React.createElement("table",{style:{width:'100%',borderCollapse:'collapse',fontSize:'13px'}},/*#__PURE__*/React.createElement("thead",{style:{position:'sticky',top:0,background:'#f5f5f5'}},/*#__PURE__*/React.createElement("tr",null,/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'left',fontWeight:600}},"Store Code"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'left',fontWeight:600}},"Store Name"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Deliveries"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Total Pallets"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Total Cases"),/*#__PURE__*/React.createElement("th",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600}},"Avg PLT/Delivery"))),/*#__PURE__*/React.createElement("tbody",null,Object.entries(storeFrequency).sort((a,b)=>b[1].count-a[1].count).map(([code,data])=>{const dirStore=storesDirectory.find(s=>s.code===code);return/*#__PURE__*/React.createElement("tr",{key:code,style:{borderBottom:'1px solid #eee'}},/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',fontWeight:600}},code),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px'}},dirStore?.name||data.name||'-'),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600,color:'#1a7f4b'}},data.count),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',fontWeight:600,color:'#ff9800'}},data.pallets),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center'}},data.cases.toLocaleString()),/*#__PURE__*/React.createElement("td",{style:{padding:'12px 10px',textAlign:'center',color:'#666'}},data.count>0?(data.pallets/data.count).toFixed(1):'-'));}),Object.keys(storeFrequency).length===0&&/*#__PURE__*/React.createElement("tr",null,/*#__PURE__*/React.createElement("td",{colSpan:"6",style:{padding:'40px',textAlign:'center',color:'#999'}},"No data for selected date range")))))),(()=>{const zoneData={};storesDirectory.forEach(store=>{const zone=store.zone||'No Zone';if(!zoneData[zone])zoneData[zone]={count:0,stores:[]};zoneData[zone].count++;zoneData[zone].stores.push(store.code);});return Object.keys(zoneData).length>1&&/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden',marginTop:'24px'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDDFA\uFE0F Stores by Zone")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px',display:'flex',gap:'16px',flexWrap:'wrap'}},Object.entries(zoneData).sort((a,b)=>b[1].count-a[1].count).map(([zone,data])=>/*#__PURE__*/React.createElement("div",{key:zone,style:{background:'#f5f5f5',borderRadius:'8px',padding:'16px 24px',minWidth:'120px',textAlign:'center'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'24px',fontWeight:700,color:'#1a7f4b'}},data.count),/*#__PURE__*/React.createElement("div",{style:{fontSize:'14px',fontWeight:500,color:'#333',marginTop:'4px'}},zone),/*#__PURE__*/React.createElement("div",{style:{fontSize:'11px',color:'#999'}},"stores")))));})()),reportsSubTab==='Pallet Analysis'&&/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{style:{display:'flex',justifyContent:'flex-end',marginBottom:'16px'}},/*#__PURE__*/React.createElement("button",{onClick:()=>{const printContent=`
+                            <html><head><title>Pallet Analysis Report - ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)}</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; padding: 20px; }
+                              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                              th { background: #f5f5f5; }
+                              h1 { color: #1a7f4b; margin-bottom: 5px; }
+                              .summary-cards { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+                              .card { border: 1px solid #ddd; padding: 15px 25px; border-radius: 8px; text-align: center; min-width: 100px; }
+                              .card-value { font-size: 28px; font-weight: bold; }
+                              .card-label { font-size: 12px; color: #666; }
+                              @media print { body { padding: 0; } }
+                            </style></head><body>
+                            <h1>📦 Pallet Analysis Report</h1>
+                            <p style="color: #666; margin-top: 0;">Date Range: ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)} | Generated: ${new Date().toLocaleString('en-US')}</p>
+                            
+                            <div class="summary-cards">
+                              <div class="card"><div class="card-value" style="color: #ff9800;">${totalPallets}</div><div class="card-label">Total Pallets</div></div>
+                              <div class="card"><div class="card-value" style="color: #9c27b0;">${totalCases.toLocaleString()}</div><div class="card-label">Total Cases</div></div>
+                              <div class="card"><div class="card-value" style="color: #1a7f4b;">${totalPallets>0?(totalCases/totalPallets).toFixed(1):0}</div><div class="card-label">Avg Cases/Pallet</div></div>
+                            </div>
+                            
+                            <h2>Pallets by Type</h2>
+                            <table>
+                              <tr><th>Type</th><th>Name</th><th style="text-align:center">Count</th><th style="text-align:center">Percentage</th></tr>
+                              ${palletTypes.filter(pt=>pt&&pt.abbrev).map(pt=>`<tr><td><strong>${escapePrint(pt.abbrev)}</strong></td><td>${escapePrint(pt.name)}</td><td style="text-align:center">${palletsByType[pt.abbrev]||0}</td><td style="text-align:center">${totalPallets>0?((palletsByType[pt.abbrev]||0)/totalPallets*100).toFixed(1):0}%</td></tr>`).join('')}
+                              <tr style="font-weight: bold; background: #e8f5e9;"><td colspan="2">TOTAL</td><td style="text-align:center">${totalPallets}</td><td style="text-align:center">100%</td></tr>
+                            </table>
+                            
+                            <p style="margin-top: 40px; font-size: 11px; color: #999; text-align: center;">${escapePrint(bolSettings.companyName)} - Logistics Dashboard</p>
+                            </body></html>
+                          `;const printWindow=window.open('','_blank');printWindow.document.write(printContent);printWindow.document.close();printWindow.print();},style:{background:'#333',color:'white',border:'none',borderRadius:'6px',padding:'10px 20px',cursor:'pointer',fontWeight:500,fontSize:'13px'}},"\uD83D\uDDA8\uFE0F Print Pallet Report")),/*#__PURE__*/React.createElement("div",{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(150px, 1fr))',gap:'16px',marginBottom:'24px'}},palletTypes.filter(pt=>pt&&pt.abbrev).map(pt=>/*#__PURE__*/React.createElement("div",{key:pt.id,style:{background:'white',borderRadius:'12px',padding:'20px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',borderTop:'4px solid '+(pt.color||'#666'),textAlign:'center'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'36px',fontWeight:700,color:pt.color||'#666'}},palletsByType[pt.abbrev]||0),/*#__PURE__*/React.createElement("div",{style:{fontSize:'16px',fontWeight:600,color:'#333',marginTop:'8px'}},pt.abbrev),/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666'}},pt.name),/*#__PURE__*/React.createElement("div",{style:{fontSize:'11px',color:'#999',marginTop:'8px'}},totalPallets>0?((palletsByType[pt.abbrev]||0)/totalPallets*100).toFixed(1):0,"% of total")))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden',marginBottom:'24px'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDCCA Pallet Distribution")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',height:'40px',borderRadius:'8px',overflow:'hidden'}},palletTypes.filter(pt=>pt&&pt.abbrev&&palletsByType[pt.abbrev]>0).map(pt=>/*#__PURE__*/React.createElement("div",{key:pt.id,style:{background:pt.color||'#666',width:(totalPallets>0?palletsByType[pt.abbrev]/totalPallets*100:0)+'%',display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:600,fontSize:'12px',minWidth:palletsByType[pt.abbrev]>0?'30px':'0'},title:pt.abbrev+': '+palletsByType[pt.abbrev]},palletsByType[pt.abbrev]/totalPallets*100>8?pt.abbrev:''))),/*#__PURE__*/React.createElement("div",{style:{display:'flex',gap:'16px',marginTop:'12px',flexWrap:'wrap'}},palletTypes.filter(pt=>pt&&pt.abbrev).map(pt=>/*#__PURE__*/React.createElement("div",{key:pt.id,style:{display:'flex',alignItems:'center',gap:'6px'}},/*#__PURE__*/React.createElement("div",{style:{width:'12px',height:'12px',borderRadius:'2px',background:pt.color||'#666'}}),/*#__PURE__*/React.createElement("span",{style:{fontSize:'12px',color:'#666'}},pt.abbrev,": ",palletsByType[pt.abbrev]||0)))))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDCE6 Cases Summary")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px',display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:'20px'}},/*#__PURE__*/React.createElement("div",{style:{textAlign:'center'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'32px',fontWeight:700,color:'#9c27b0'}},totalCases.toLocaleString()),/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666'}},"Total Cases")),/*#__PURE__*/React.createElement("div",{style:{textAlign:'center'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'32px',fontWeight:700,color:'#1a7f4b'}},totalPallets>0?(totalCases/totalPallets).toFixed(1):0),/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666'}},"Avg Cases/Pallet")),/*#__PURE__*/React.createElement("div",{style:{textAlign:'center'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:'32px',fontWeight:700,color:'#2196f3'}},totalRoutes>0?Math.round(totalCases/totalRoutes).toLocaleString():0),/*#__PURE__*/React.createElement("div",{style:{fontSize:'12px',color:'#666'}},"Avg Cases/Route"))))),reportsSubTab==='Export Center'&&/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{style:{display:'grid',gridTemplateColumns:'repeat(2, 1fr)',gap:'20px'}},/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDE9A Export Routes"),/*#__PURE__*/React.createElement("p",{style:{margin:'4px 0 0',fontSize:'12px',color:'#666'}},"Download route data for selected date range")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px'}},/*#__PURE__*/React.createElement("p",{style:{fontSize:'13px',color:'#666',marginBottom:'16px'}},totalRoutes," routes \u2022 ",totalStores," stores \u2022 ",totalPallets," pallets"),/*#__PURE__*/React.createElement("button",{onClick:()=>{let csv='Date,Route,Driver,Truck,Store Code,Store Name,Pallets,Cases\n';routesInRange.forEach(route=>{route.stores.forEach(store=>{const palletCount=(store.pallets||[]).filter(p=>p>0).length;csv+=route.date+','+(route.driver||'Unassigned')+' #'+(routesInRange.filter(r=>r.driver===route.driver).indexOf(route)+1)+','+(route.driver||'Unassigned')+','+(route.truck||'')+','+(store.code||'')+',"'+(store.name||'')+'",'+palletCount+','+(store.tc||0)+'\n';});});const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='routes_'+reportDateRange.start+'_to_'+reportDateRange.end+'.csv';a.click();},style:{background:'#1a7f4b',color:'white',border:'none',borderRadius:'6px',padding:'12px 32px',cursor:'pointer',fontWeight:500}},"\uD83D\uDCE5 Download Routes CSV"))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83C\uDFEA Export Store Directory"),/*#__PURE__*/React.createElement("p",{style:{margin:'4px 0 0',fontSize:'12px',color:'#666'}},"Download complete store list")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px'}},/*#__PURE__*/React.createElement("p",{style:{fontSize:'13px',color:'#666',marginBottom:'16px'}},storesDirectory.length," stores in directory"),/*#__PURE__*/React.createElement("button",{onClick:()=>{let csv='Code,Name,Street,City,State,ZIP,Zone,Hours,Max Trailer Size\n';storesDirectory.forEach(store=>{csv+=(store.code||'')+',"'+(store.name||'')+'","'+(store.street||'')+'",'+(store.city||'')+','+(store.state||'')+','+(store.zip||'')+','+(store.zone||'')+','+(store.hours||'')+','+(store.maxTrailer||'')+'\n';});const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='store_directory.csv';a.click();},style:{background:'#2196f3',color:'white',border:'none',borderRadius:'6px',padding:'12px 32px',cursor:'pointer',fontWeight:500}},"\uD83D\uDCE5 Download Stores CSV"))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDC64 Export Driver Summary"),/*#__PURE__*/React.createElement("p",{style:{margin:'4px 0 0',fontSize:'12px',color:'#666'}},"Download driver performance data")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px'}},/*#__PURE__*/React.createElement("p",{style:{fontSize:'13px',color:'#666',marginBottom:'16px'}},Object.keys(driverData).length," drivers with activity"),/*#__PURE__*/React.createElement("button",{onClick:()=>{let csv='Driver,Routes,Stores,Pallets,Cases,Avg Stores/Route,Avg Pallets/Route\n';Object.entries(driverData).forEach(([driver,data])=>{csv+='"'+driver+'",'+data.routes+','+data.stores+','+data.pallets+','+data.cases+','+(data.routes>0?(data.stores/data.routes).toFixed(1):0)+','+(data.routes>0?(data.pallets/data.routes).toFixed(1):0)+'\n';});const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='driver_summary_'+reportDateRange.start+'_to_'+reportDateRange.end+'.csv';a.click();},style:{background:'#ff9800',color:'white',border:'none',borderRadius:'6px',padding:'12px 32px',cursor:'pointer',fontWeight:500}},"\uD83D\uDCE5 Download Drivers CSV"))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDCE6 Export Pallet Summary"),/*#__PURE__*/React.createElement("p",{style:{margin:'4px 0 0',fontSize:'12px',color:'#666'}},"Download pallet type breakdown")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px'}},/*#__PURE__*/React.createElement("p",{style:{fontSize:'13px',color:'#666',marginBottom:'16px'}},totalPallets," total pallets \u2022 ",totalCases.toLocaleString()," total cases"),/*#__PURE__*/React.createElement("button",{onClick:()=>{let csv='Pallet Type,Abbreviation,Count,Percentage\n';palletTypes.filter(pt=>pt&&pt.abbrev).forEach(pt=>{const count=palletsByType[pt.abbrev]||0;const pct=totalPallets>0?(count/totalPallets*100).toFixed(1):0;csv+='"'+(pt.name||'')+'",'+pt.abbrev+','+count+','+pct+'%\n';});csv+='\nTotal,,'+totalPallets+',100%\n';csv+='Total Cases,,'+totalCases+',\n';const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pallet_summary_'+reportDateRange.start+'_to_'+reportDateRange.end+'.csv';a.click();},style:{background:'#9c27b0',color:'white',border:'none',borderRadius:'6px',padding:'12px 32px',cursor:'pointer',fontWeight:500}},"\uD83D\uDCE5 Download Pallets CSV")))),/*#__PURE__*/React.createElement("div",{style:{background:'white',borderRadius:'12px',boxShadow:'0 1px 3px rgba(0,0,0,0.1)',overflow:'hidden',marginTop:'20px'}},/*#__PURE__*/React.createElement("div",{style:{padding:'16px 20px',borderBottom:'1px solid #e0e0e0'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'16px',fontWeight:600,color:'#333'}},"\uD83D\uDDA8\uFE0F Print Summary Report")),/*#__PURE__*/React.createElement("div",{style:{padding:'20px'}},/*#__PURE__*/React.createElement("button",{onClick:()=>{const printContent=`
+                              <html><head><title>Logistics Report - ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)}</title>
+                              <style>body { font-family: Arial, sans-serif; padding: 20px; }
+                              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                              th { background: #f5f5f5; }
+                              h1 { color: #1a7f4b; }
+                              </style></head><body>
+                              <h1>📊 Logistics Summary Report</h1>
+                              <p><strong>Date Range:</strong> ${escapePrint(reportDateRange.start)} to ${escapePrint(reportDateRange.end)}</p>
+                              <p><strong>Generated:</strong> ${new Date().toLocaleString('en-US')}</p>
+                              
+                              <h2>Overview</h2>
+                              <table>
+                                <tr><th>Metric</th><th>Value</th></tr>
+                                <tr><td>Total Routes</td><td>${totalRoutes}</td></tr>
+                                <tr><td>Stores Delivered</td><td>${totalStores}</td></tr>
+                                <tr><td>Total Pallets</td><td>${totalPallets}</td></tr>
+                                <tr><td>Total Cases</td><td>${totalCases.toLocaleString()}</td></tr>
+                              </table>
+                              
+                              <h2>Pallets by Type</h2>
+                              <table>
+                                <tr><th>Type</th><th>Count</th><th>Percentage</th></tr>
+                                ${palletTypes.filter(pt=>pt&&pt.abbrev).map(pt=>`<tr><td>${pt.abbrev} - ${pt.name}</td><td>${palletsByType[pt.abbrev]||0}</td><td>${totalPallets>0?((palletsByType[pt.abbrev]||0)/totalPallets*100).toFixed(1):0}%</td></tr>`).join('')}
+                              </table>
+                              
+                              <h2>Driver Performance</h2>
+                              <table>
+                                <tr><th>Driver</th><th>Routes</th><th>Stores</th><th>Pallets</th><th>Cases</th></tr>
+                                ${Object.entries(driverData).map(([driver,data])=>`<tr><td>${driver}</td><td>${data.routes}</td><td>${data.stores}</td><td>${data.pallets}</td><td>${data.cases.toLocaleString()}</td></tr>`).join('')}
+                              </table>
+                              
+                              <p style="margin-top: 40px; font-size: 11px; color: #999;">Newmans Refrigerated Service - Logistics Dashboard</p>
+                              </body></html>
+                            `;const printWindow=window.open('','_blank');printWindow.document.write(printContent);printWindow.document.close();printWindow.print();},style:{background:'#333',color:'white',border:'none',borderRadius:'6px',padding:'12px 32px',cursor:'pointer',fontWeight:500}},"\uD83D\uDDA8\uFE0F Print Summary Report")))));})());
+}

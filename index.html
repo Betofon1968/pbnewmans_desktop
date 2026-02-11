@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<!--
+  ╔╗
+  ║                       LOGISTICS DASHBOARD v26.106                              ║
+  ║                         Elite Cold Storage                                     ║
+  ║                                                                                ║
+  ║  Total Lines: ~18,800 | Last Updated: January 2026                             ║
+  ╚
+  
+  ┌─────────────────────────────────────────────────────────────────────────────────
+  │                              TABLE OF CONTENTS                                  │
+  ├─────────────────────────────────────────────────────────────────────────────────┤
+  │                                                                                 │
+  │  SECTION 1: CONFIGURATION & SETUP                               [Lines 270-475]│
+  │    • Supabase Configuration (line 283)                                          │
+  │    • CSS Styles (line 144)                                                      │
+  │                                                                                 │
+  │  SECTION 2: MAIN COMPONENT - STATE DECLARATIONS                 [Lines 475-745]│
+  │    • Date & Route State (line 487)                                              │
+  │    • Directory States - Stores, Drivers, Equipment (line 520)                   │
+  │    • UI States - Tabs, Modals, Filters (line 540)                               │
+  │    • Settings States - PC*Miler, BOL, Timezone (line 607)                       │
+  │    • Permission Functions (line 695)                                            │
+  │                                                                                 │
+  │  SECTION 3: UTILITY FUNCTIONS                                   [Lines 747-838]│
+  │    • getWeekDates, formatDateDisplay (line 751)                                 │
+  │    • formatPhoneNumber (line 780)                                               │
+  │    • copyRoutesFromDate (line 803)                                              │
+  │                                                                                 │
+  │  SECTION 4: DATA LOADING & SYNC                                [Lines 838-1216]│
+  │    • Load Users from Supabase (line 848)                                        │
+  │    • Presence Tracking (line 883)                                               │
+  │    • Real-time Subscriptions (line 934)                                         │
+  │    • Activity Logging (line 1059)                                               │
+  │    • saveToSupabase (line 1139)                                                 │
+  │                                                                                 │
+  │  SECTION 5: CALCULATIONS                                       [Lines 1216-1332│
+  │    • driverColors Generation (line 1220)                                        │
+  │    • calculateTotals (line 1248)                                                │
+  │    • getDriverStats (line 1278)                                                 │
+  │    • calculateRouteTotal (line 1291)                                            │
+  │                                                                                 │
+  │  SECTION 6: ROUTE OPERATIONS (CRUD)                            [Lines 1332-1706│
+  │    • toggleRouteExpand (line 1335)                                              │
+  │    • updatePallet, logPalletChange (line 1343)                                  │
+  │    • updateStore, updateRoute (line 1379)                                       │
+  │    • addStore, removeStore (line 1431)                                          │
+  │    • addRoute, removeRoute, copyRoute (line 1482)                               │
+  │    • moveRoute, moveStore (line 1561)                                           │
+  │    • sortStorePalletsByType (line 1575)                                         │
+  │    • addPalletColumn, removePalletColumn (line 1635)                            │
+  │                                                                                 │
+  │  SECTION 7: BOL & PRINT GENERATION                             [Lines 1706-2051│
+  │    • generateBOL (line 1709) - Bill of Lading / Delivery Report                 │
+  │                                                                                 │
+  │  SECTION 8: STORE DIRECTORY OPERATIONS                         [Lines 2051-2248│
+  │    • addStoreToDirectory, updateStoreInDirectory (line 2054)                    │
+  │    • removeStoreFromDirectory (line 2090)                                       │
+  │    • importStoresFromCSV (line 2130)                                            │
+  │                                                                                 │
+  │  SECTION 9: DRIVER DIRECTORY OPERATIONS                        [Lines 2248-2537│
+  │    • addDriver, updateDriver, removeDriver (line 2250)                          │
+  │    • getExpiringDocuments (line 2350)                                           │
+  │    • sendExpirationAlerts (line 2390)                                           │
+  │    • importDriversFromCSV (line 2450)                                           │
+  │                                                                                 │
+  │  SECTION 10: EQUIPMENT OPERATIONS                              [Lines 2537-2660│
+  │    • Trucks: add/update/remove (line 2540)                                      │
+  │    • Trailers: add/update/remove (line 2580)                                    │
+  │    • Tractors: add/update/remove (line 2620)                                    │
+  │                                                                                 │
+  │  SECTION 11: IMPORT/EXPORT & SYNC                              [Lines 2660-2732│
+  │    • exportData (line 2663)                                                     │
+  │    • importData (line 2680)                                                     │
+  │    • getSyncStatus (line 2710)                                                  │
+  │                                                                                 │
+  │  SECTION 12: MAIN RENDER - UI TABS                            [Lines 2732-5500]│
+  │    • Tab Navigation (line 2800)                                                 │
+  │    • Overview Tab - Routes Display (line 3100)                                  │
+  │    • Print Options Tab (line 4000)                                              │
+  │    • Store Directory Tab (line 7700)                                            │
+  │    • Drivers Tab (line 8500)                                                    │
+  │    • Equipment Tab (line 9200)                                                  │
+  │    • Reports Tab (line 9600)                                                    │
+  │    • Settings Tab (line 10000)                                                  │
+  │                                                                                 │
+  │  SECTION 13: MODALS                                            [Lines 5500-5800│
+  │    • Move Store Modal (line 5520)                                               │
+  │    • Delete Confirmation Modal (line 5600)                                      │
+  │    • Driver View/Print Modals (line 5650)                                       │
+  │    • Expiration Alerts Modal (line 5700)                                        │
+  │                                                                                 │
+  │  SECTION 14: STANDALONE COMPONENTS                            [Lines 10575-end]│
+  │    • StatCard Component (line 10575)                                            │
+  │    • RouteCard Component (line 10591) - Main route display                      │
+  │    • AuthScreen Component (line 11460)                                          │
+  │    • App Component (line 11593) - Main entry point                              │
+  │    • PasswordResetScreen (line 11647)                                           │
+  │                                                                                 │
+  └─────────────────────────────────────────────────────────────────────────────────┘
+  
+  ┌─────────────────────────────────────────────────────────────────────────────────
+  │                           QUICK REFERENCE                                       │
+  ├─────────────────────────────────────────────────────────────────────────────────┤
+  │                                                                                 │
+  │  KEY FUNCTIONS:                                                                 │
+  │    • generateBOL(route)          → Creates delivery report PDF                  │
+  │    • saveToSupabase(...)         → Persists all data to database                │
+  │    • calculateRouteTotal(...)    → Computes pallet counts by type               │
+  │    • sortStorePalletsByType(...) → Reorders pallets per Pallet Setup            │
+  │                                                                                 │
+  │  KEY COMPONENTS:                                                                │
+  │    • LogisticsDashboard          → Main app (line 478)                          │
+  │    • RouteCard                   → Individual route display (line 10591)        │
+  │    • AuthScreen                  → Login screen (line 11460)                    │
+  │                                                                                 │
+  │  DATA STRUCTURES:                                                               │
+  │    • routesByDate[date]          → Array of routes for a date                   │
+  │    • route.stores[]              → Array of stores in a route                   │
+  │    • store.pallets[]             → Array of pallet case counts                  │
+  │    • store.palletTypes[]         → Array of pallet type codes (FZ, DR, etc)     │
+  │                                                                                 │
+  └─────────────────────────────────────────────────────────────────────────────────┘
+  
+  ┌─────────────────────────────────────────────────────────────────────────────────
+  │                               CHANGELOG                                         │
+  ├─────────────────────────────────────────────────────────────────────────────────┤
+  │                                                                                 │
+  │  v26.106 (Current):                                                             │
+  │    - ADD: escapeHtml() helper to prevent XSS and broken layouts in BOL/prints   │
+  │    - FIX: BOL store names, addresses, notes now HTML-escaped                    │
+  │    - FIX: BOL company name, address, instructions, contact info escaped         │
+  │    - FIX: Invoice PDF/Excel now use createdAt date when editing saved invoice   │
+  │    - ADD: getInvoiceDisplayDate() helper for consistent date display            │
+  │    - FIX: Header banner updated to v26.106                                      │
+  │                                                                                 │
+  │  v26.97:                                                              │
+  │    - FIX: Removed reference to non-existent configSubscriptionRef               │
+  │    - FIX: Logout clears localStorage BEFORE signOut (prevents rehydration)      │
+  │    - FIX: Logout checks { error } returned by signOut (not just try/catch)      │
+  │    - FIX: Uses signOut({ scope: 'global' }) for complete session termination    │
+  │    - FIX: Added cleanup for deleteChannelRef and updateChannelRef               │
+  │    - FIX: Finally block clears UI state regardless of signOut result            │
+  │                                                                                 │
+  │  v26.96:                                                              │
+  │    - FIX: Logout now forces page reload to prevent auto-login race condition    │
+  │    - FIX: Clear Supabase localStorage tokens on logout                          │
+  │    - FIX: onAuthStateChange ignores SIGNED_IN/INITIAL_SESSION right after logout│
+  │    - Prevents the "logout then auto-login" bug                                  │
+  │                                                                                 │
+  │  v26.95:                                                              │
+  │    - CRITICAL: View Invoice now uses saved rateOverrides (totals match)         │
+  │    - FIX: Invoice print date uses createdAt, not current date                   │
+  │    - FIX: savedInvoices.sort() no longer mutates React state                    │
+  │    - PERF: storeByCode Map lookup (O(1)) replaces find() (O(n)) in invoices     │
+  │    - View Invoice deliveries now include hasOverride flag                       │
+  │                                                                                 │
+  │  v26.94:                                                              │
+  │    - INVOICE FIX: Rate overrides now saved/restored with invoices               │
+  │    - INVOICE FIX: Saved invoices include snapshot for audit-safe data           │
+  │    - INVOICE FIX: noCharge uses strict boolean check (handles "false" strings)  │
+  │    - INVOICE FIX: Pallet count can't go negative (Math.max guard)               │
+  │    - INVOICE FIX: Manual item NaN guard prevents $NaN in exports                │
+  │    - INVOICE FIX: CSV export properly escapes quotes in store names             │
+  │    - PERF: Invoice route loading uses specific columns, not select('*')         │
+  │    - Clear rate overrides when canceling invoice edit                           │
+  │                                                                                 │
+  │  v26.93:                                                              │
+  │    - FEATURE: Copy Routes button now works for future dates even with routes   │
+  │    - UI: Shows warning when copying will replace existing routes               │
+  │    - FIX: isLoggingOutRef.current set at start of logout to prevent reconnects │
+  │    - FIX: Force-logout channel properly waits for subscribe before broadcast   │
+  │    - FIX: Force-logout uses removeChannel() instead of unsubscribe()           │
+  │    - FIX: Logout now cleans up routes and config subscriptions                 │
+  │    - PERF: Removed mousemove from inactivity tracking (fires too frequently)   │
+  │    - PERF: Offline recovery now fetches only 60-day range, specific columns    │
+  │                                                                                 │
+  │  v26.92:                                                              │
+  │    - FIX: View button on saved invoices now works (was missing byStore/byZone)   │
+  │    - FIX: Invoice View now calculates byStore, byZone, and totalPallets properly │
+  │                                                                                 │
+  │  v26.89:                                                              │
+  │    - FIX: Presence groups by user_id (unique) with fallback to user_name          │
+  │    - FIX: Stale user pruning - sessions >90s old are automatically removed        │
+  │    - FIX: Self-heal tick every 15s rebuilds users to fix missed events            │
+  │    - FIX: All track() calls now include user_id for accurate grouping             │
+  │    - SECURITY: Sentry scrubs sensitive data (stores, drivers, routes)             │
+  │    - SECURITY: Sentry adds session_id and build_date tags                         │
+  │                                                                                 │
+  │  v26.88:                                                              │
+  │    - FIX: Always use removeChannel (not unsubscribe) when giving up               │
+  │    - FIX: Reset reconnectBackoffMs after stable recovery                          │
+  │    - REFACTOR: buildActiveUsersFromState helper reduces code duplication          │
+  │    - FIX: Online count shows "..." when not connected (UI never lies)             │
+  │    - DEBUG: APP_VERSION and PRESENCE_SESSION_ID exposed to window                 │
+  │    - FIX: APP_BUILD_DATE corrected to 2026                                        │
+  │                                                                                 │
+  │  v26.87:                                                              │
+  │    - FIX: Removed redundant userName effect that caused race conditions          │
+  │    - FIX: restartPresence uses removeChannel() for proper cleanup                 │
+  │    - FIX: Cleanup uses removeChannel() instead of unsubscribe()                   │
+  │    - FIX: Stale check after await channel.track() prevents acting on old channel │
+  │                                                                                 │
+  │  v26.86:                                                              │
+  │    - FIX: Presence never lies about connection status                            │
+  │    - FIX: presenceConnected only true after first successful track()             │
+  │    - FIX: Heartbeat interval ALWAYS starts (even if userName missing)            │
+  │    - FIX: userName effect tracks immediately when userName arrives               │
+  │    - NEW: hasTrackedOnce flag ensures UI accuracy across browsers                │
+  │                                                                                 │
+  │  v26.85:                                                              │
+  │    - FIX: Presence retry loop bug - CLOSED callback no longer triggers retry    │
+  │      when restartPresence() intentionally closed the channel                    │
+  │    - NEW: isRestartingPresence flag prevents cascading retry loops              │
+  │                                                                                 │
+  │  v26.84:
+  │    - FIX: UTF-8 encoding repaired (emojis and box-drawing chars now render correctly)│
+  │    - FIX: Session key uses crypto.randomUUID() with Date.now fallback (no collisions)│
+  │                                                                                 │
+  │  v26.83:
+      - FIX: Version label mismatch (title/header now match APP_VERSION)           
+      - PERF: localStorage writes use requestIdleCallback (non-blocking)           
+      - FIX: Presence tolerance - extra safety check before track()                
+      - FIX: Consistent channel cleanup using removeChannel() everywhere           
+                                                                                   
+    v26.74:                                                              │
+  │    - PERF: Only save config when it actually changed (lastSavedConfig check)    │
+  │    - FIX: Route channel cleanup with removeChannel + setup token                │
+  │    - FIX: Unique channel names per setup prevents duplicate UPDATE processing   │
+  │    - FIX: Stale route callbacks ignored with routesSetupIdRef token             │
+  │                                                                                 │
+  │  v26.73:                                                              │
+  │    - CRITICAL FIX: Prevent infinite "max retries" loop and stack overflow       │
+  │    - Added hasGivenUp flag to prevent re-entry after max retries reached        │
+  │    - Don't call unsubscribe() on already-CLOSED channels                        │
+  │    - Protected all three max retry paths (timeout, CHANNEL_ERROR, CLOSED)       │
+  │                                                                                 │
+  │  v26.72:                                                              │
+  │    - FIX: Clear syncInterval (30s heartbeat) on all "max retries" give-up paths │
+  │    - STABILITY: App goes quiet during backoff, no more noisy degraded loops     │
+  │                                                                                 │
+  │  v26.71:                                                              │
+  │    - FIX: track() calls now have .catch() to prevent unhandled rejections       │
+  │    - FIX: track() checks presenceConnectedRef before attempting                 │
+  │    - NEW: Slow recovery loop after max retries (60s→2m→4m→10m backoff)          │
+  │    - NEW: Immediate recovery attempt when browser comes online                  │
+  │    - NEW: Track failure streak counter (3 fails → mark degraded)                │
+  │    - FIX: Subscription timeout increased 5s→10s for slow networks               │
+  │    - FIX: Cleanup properly clears reconnectTimer and online listener            │
+  │                                                                                 │
+  │  v26.70:                                                              │
+  │    - FIX: Throttle focus/visibility presence re-track (15s cooldown)            │
+  │    - FIX: setRoutes checks isFromServer before setting hasPendingChanges        │
+  │    - FIX: Increased exitServerUpdate delay 100ms→300ms for React timing         │
+  │    - CLEANUP: Removed verbose focus/visibility console logs                     │
+  │                                                                                 │
+  │  v26.69:                                                              │
+  │    - FIX: Clear presenceChannelRef on max retries (prevents focus/vis spam)     │
+  │    - FIX: Unsubscribe channel on all max retry paths before clearing ref        │
+  │                                                                                 │
+  │  v26.68:                                                              │
+  │    - FIX: restartPresence() helper - invalidates token BEFORE unsubscribe       │
+  │    - FIX: CHANNEL_ERROR max retries now sets presenceConnected(false) for UI    │
+  │    - BULLETPROOF: Immediate CLOSED from unsubscribe is guaranteed stale         │
+  │                                                                                 │
+  │  v26.67:                                                              │
+  │    - FIX: Presence flapping loop - use local channel + setupId token            │
+  │    - FIX: Stale callbacks now ignored (prevent unsubscribing wrong channel)     │
+  │    - FIX: Each setupPresence() gets unique ID, old callbacks are rejected       │
+  │                                                                                 │
+  │  v26.66:                                                              │
+  │    - FIX: Presence retry loop - only reset retryCount after 10s stable          │
+  │    - FIX: Clear syncInterval before creating new one (prevent duplicates)       │
+  │    - FIX: Use presenceConnectedRef for stable timer check                       │
+  │                                                                                 │
+  │  v26.65:                                                              │
+  │    - FIX: Broadcast channels now stay open across date changes (no missed msgs) │
+  │    - CLEANUP: Removed verbose "Debounce: Skipped" log spam                      │
+  │                                                                                 │
+  │  v26.64:                                                              │
+  │    - FIX: Cache write error (routesByDateObj scope issue)                       │
+  │                                                                                 │
+  │  v26.63:                                                              │
+  │    - REMOVED: "Updates available from X" banner (smart merge handles it)        │
+  │    - CLEANER: Less intrusive - changes merge automatically in background        │
+  │                                                                                 │
+  │  v26.62:                                                              │
+  │    - FIX: Removed legacy isFromServer setter (read-only getter only)            │
+  │    - FIX: presenceConnectedRef for bulletproof fallback timer                   │
+  │    - PERF: Reduced exitServerUpdate delays from 500ms to 100ms                  │
+  │    - CLEANUP: Cleaner server update guard pattern                               │
+  │                                                                                 │
+  │  v26.61:                                                              │
+  │    - FIX: Presence only shows green when actually SUBSCRIBED                    │
+  │    - FIX: Presence fallback no longer falsely claims connected                  │
+  │    - FIX: All isFromServer replaced with counter-based enter/exitServerUpdate   │
+  │    - FIX: Race-proof server update guard with try/finally pattern everywhere    │
+  │    - CLEANUP: Updated version banner to January 2026                            │
+  │                                                                                 │
+  │  v26.60:                                                              │
+  │    - FIX: Race-proof isFromServer with counter (serverUpdateDepth)              │
+  │    - FIX: Presence indicator only shows green when actually connected           │
+  │    - FIX: Presence fallback no longer falsely claims connected                  │
+  │    - UI: Shows ⚠ warning when presence degraded                                │
+  │                                                                                 │
+  │  v26.59:                                                              │
+  │    - FIX: Background prefetch no longer triggers accidental saves               │
+  │    - FIX: Route delete now properly clears hasPendingChanges flag               │
+  │    - FIX: Debounce save skips if no pending changes (extra guard)               │
+  │    - FIX: handleLogout wrapped in useCallback (prevents event rebinding)        │
+  │    - STABILITY: Pinned CDN versions (React 18.2.0, Supabase 2.45.0)             │
+  │                                                                                 │
+  │  v26.58:                                                              │
+  │    - FEATURE: Excel-like smart merge! Server updates merge with your edits      │
+  │    - FEATURE: Dirty field tracking per route (driver, truck, trailer, stores)   │
+  │    - No more losing your changes when someone else saves!                       │
+  │    - Real-time updates now MERGE instead of overwrite                           │
+  │                                                                                 │
+  │  v26.57:                                                              │
+  │    - FIX: Presence fallback timer only runs when userName exists                │
+  │    - FIX: Dropdown now includes current_date when re-tracking                   │
+  │    - FIX: Dropdown uses same user parsing as sync/join/leave (consistent)       │
+  │    - FIX: CLOSED/TIMED_OUT now retry with backoff (reconnect after disconnect)  │
+  │    - FIX: In-flight guard prevents overlapping track calls                      │
+  │    - FIX: Removed console.log spam from dropdown                                │
+  │                                                                                 │
+  │  v26.56:                                                              │
+  │    - FIX: Presence tracking - removed heavy console.log spam                    │
+  │    - FIX: Stale activeUsers bug - users now clear properly when they leave      │
+  │    - FIX: Heartbeat interval 10s → 30s (reduces traffic/battery)                │
+  │    - FEATURE: Shows "(2 tabs)" when user has multiple tabs open                 │
+  │                                                                                 │
+  │  v26.55:                                                              │
+  │    - FEATURE: Login/Logout tracking in Activity Log                             │
+  │    - Activity Log filter: new "Login/Logout" option under Type                  │
+  │    - Track when users login and logout from the system                          │
+  │                                                                                 │
+  │  v26.54:                                                              │
+  │    - FEATURE: Undo now works for PALLET CHANGES (most important!)               │
+  │    - FEATURE: Visible Undo button in header (shows count)                       │
+  │    - Undo: Ctrl+Z or click button - works for pallets, driver, stores, routes   │
+  │                                                                                 │
+  │  v26.53:                                                              │
+  │    - FEATURE: Undo support (Ctrl+Z) - 5 levels of undo                          │
+  │    - FEATURE: "Updates Available" banner when editing during sync               │
+  │    - PERFORMANCE: Load current date first, prefetch others in background        │
+  │    - OPTIMIZATION: Removed redundant broadcast reloads (postgres_changes enough)│
+  │    - Undo works for: driver/truck/trailer, add/delete store, add/delete route   │
+  │                                                                                 │
+  │  v26.52:                                                              │
+  │    - FEATURE: Now loads 3 weeks of data on startup (2 weeks back + 1 week ahead)│
+  │    - No more loading delay when switching between dates                         │
+  │    - Date counts computed from loaded data (no extra query)                     │
+  │                                                                                 │
+  │  v26.51:                                                                        │
+  │    - PERFORMANCE: Pre-compiled JSX (removed runtime Babel compilation)          │
+  │    - HUGE speed improvement - no more "Compiling application..." wait           │
+  │                                                                                 │
+  │  v26.50:                                                              │
+  │    - FIX: Invoices now load routes from database for the invoice date range     │
+  │    - Was broken because only current date routes were loaded in memory          │
+  │    - Invoice routes load automatically when date range changes                  │
+  │                                                                                 │
+  │  v26.49:                                                              │
+  │    - FIX: Broadcasts now use existing channel refs (prevents memory leaks)      │
+  │    - FIX: Offline reload now restores saved_invoices (prevents data loss)       │
+  │    - FIX: Realtime config sync now includes saved_invoices                      │
+  │                                                                                 │
+  │  v26.48:                                                              │
+  │    - PERFORMANCE: Date counts now load in background (faster startup)           │
+  │                                                                                 │
+  │  v26.47:                                                              │
+  │    - UI: Removed debug buttons from Online Users dropdown (cleaner UI)          │
+  │                                                                                 │
+  │  v26.46:                                                              │
+  │    - UI: Online users date now shows "Mon, Jan 12" instead of "2026-01-12"      │
+  │                                                                                 │
+  │  v26.45:                                                              │
+  │    - FIX: Version sync now updates database IMMEDIATELY on login                │
+  │    - FIX: "Reload" button now only reloads current date (faster, not all data)  │
+  │    - Ensures older users see "Refresh Required" as soon as new user logs in     │
+  │                                                                                 │
+  │  v26.44:                                                                        │
+  │    - NEW: Version check - forces users to refresh when newer version available  │
+  │    - Ensures all users run same version for proper synchronization              │
+  │                                                                                 │
+  │  v26.42:                                                              │
+  │    - FIX: "P/U at Paris Baguette" checkbox now syncs between users              │
+  │    - Added pickup_at_pb field to save/load route mappings                       │
+  │                                                                                 │
+  │  v26.41:                                                              │
+  │    - UI: New "Copy From" modal with date picker (access ANY historical date)    │
+  │    - UI: Copy options - keep drivers, keep trucks, clear/keep pallet counts     │
+  │    - UI: Preview routes before copying (shows driver breakdown)                 │
+  │    - FIX: Copy routes now works with row-per-route architecture                 │
+  │                                                                                 │
+  │  v26.40:                                                              │
+  │    - PERFORMANCE: Inactivity tracking no longer re-binds listeners constantly   │
+  │    - PERFORMANCE: Batch route save (single upsert vs N sequential calls)        │
+  │    - PERFORMANCE: No more state mutation when saving routes                     │
+  │    - BUGFIX: Fixed event bug in Test Connection button                          │
+  │                                                                                 │
+  │  v26.39:                                                              │
+  │    - SECURITY: Edge Functions now use session JWT instead of anon key           │
+  │    - SECURITY: super-action function requires authenticated user session        │
+  │    - FIX: Consolidated HTML structure (single head/body/root element)           │
+  │    - FIX: Moved all CSS to proper head section                                  │
+  │                                                                                 │
+  │  v26.38:                                                              │
+  │    - HEADER: Updated version and changelog documentation                        │
+  │    - UI: Added "Last saved" timestamp next to sync status                       │
+  │    - SAFETY: Browser warns before closing with unsaved changes                  │
+  │                                                                                 │
+  │  v26.37:                                                                        │
+  │    - MIGRATION: Now uses logistics_routes table (row-per-route architecture)    │
+  │    - MIGRATION: Config/directories moved to logistics_config table              │
+  │    - PERFORMANCE: Date-specific loading (only loads routes for selected date)   │
+  │    - PERFORMANCE: Date-specific real-time subscriptions (reduced bandwidth)     │
+  │    - RELIABILITY: Dual-channel delete handling (postgres_changes + broadcast)   │
+  │    - RELIABILITY: Route updates broadcast to sync reordering across users       │
+  │    - FIX: Proper UUID handling for new routes and reordering                    │
+  │                                                                                 │
+  │  v26.30-v26.36:                                                                 │
+  │    - MIGRATION PREP: Database schema changes for row-per-route structure        │
+  │    - TESTING: Validation of new table architecture                              │
+  │    - BUGFIX: Various fixes during migration testing                             │
+  │                                                                                 │
+  │  v26.29:                                                                        │
+  │    - CONCURRENT EDIT WARNING: Alert when another user is editing same date      │
+  │    - PRESENCE: Tracks which date each user is viewing                           │
+  │    - UI: Combined Stats + Calendar into single header row (saves ~60px)         │
+  │    - UI: More compact week day strip with abbreviated stats                      │
+  │    - UI: Print actions moved to separate thin row                                │
+  │    - PRINT: "Fit" option now works in ALL print formats (scales to fit page)    │
+  │    - PALLET SETUP: Compact rows matching Users Management styling               │
+  │    - PALLET SETUP: Added "Inactive" toggle (hides from dropdowns, keeps data)   │
+  │    - PALLET SETUP: Removed delete button (prevents data corruption)             │
+  │    - INVOICE: Rate overrides - edit rates per store in By Store view            │
+  │    - INVOICE: Added Included Pallets column to By Store view                    │
+  │    - INVOICE: Override indicator () and Clear Overrides button                │
+  │    - INVOICE: Updated company to Newmans Refrigerated Service, Inc.             │
+  │    - INVOICE: Updated Bill To with full Paris Baguette address                  │
+  │    - WEEK BAR: Now always visible (removed toggle button)                        │
+  │    - COPY: Sets default pallet structure (6 FZ, 1 DR, 1 FH) with 8 columns       │
+  │    - COPY: Clears TC (Total Cases) when copying routes                           │
+  │    - ROUTE CONFIRM: Per-route confirmation system (Admin only)                   │
+  │    - PRINT MANIFEST: Inline warning badge after zone for unconfirmed routes      │
+  │    - CRITICAL FIX: Pallet types preserved when navigating between dates          │
+  │    - INVOICE: PDF now shows Total Pallets Delivered & Total Deliveries          │
+  │    - REAL-TIME FIX: Remote changes now visible without manual refresh           │
+  │    - REAL-TIME FIX: Reduced interaction protection from 10s to 5s               │
+  │    - PRESENCE: Added 🔌 hard refresh button to reconnect user list              │
+  │    - PRESENCE: Sync interval reduced from 15s to 10s                            │
+  │    - PRINT: Remembers last used options (Portrait/Landscape, Fit, Group)        │
+  │    - STORE SEARCH:  button in action column opens search modal                │
+  │    - PRINT MANIFEST: "Hide Empty" option removes empty pallet columns           │
+  │    - STORE CHANGE: Styled confirmation modal when changing store with pallets    │
+  │    - ROUTE LOCK: Confirmed routes are locked - must unconfirm to edit           │
+  │    - SYNC FIX: Store-level conflict resolution (multiple users can edit)        │
+  │    - VERSION FIX: Proper semantic version comparison (26.10 > 26.9 now works)   │
+  │                                                                                   │
+  │  v26.2:                                                               │
+  │    - CRITICAL FIX: Save-on-navigate - data saved immediately when changing dates │
+  │    - CRITICAL FIX: Smart merge preserves ALL local dates during recent activity  │
+  │    - CRITICAL FIX: Protection window increased to 10 seconds for interactions    │
+  │    - USERS MGMT: Compact rows for better space utilization                       │
+  │    - USERS MGMT: Search bar to filter users by name/email/phone/role             │
+  │    - USERS MGMT: Sortable columns (Name, Email, Role) - click header to sort     │
+  │    - USERS MGMT: Sticky header row - stays visible when scrolling                │
+  │    - USERS MGMT: Phone field added after email                                   │
+  │    - USERS MGMT: Enhanced delete confirmation modal with warnings                │
+  │    - USERS MGMT: Shows filtered count (X of Y users)                             │
+  │    - SYNC: Added detailed logging for save/sync debugging (check console)        │
+  │    - SYNC: "Reload Data" button added to force refresh from server               │
+  │    - INVOICING: View button added to saved invoices (opens preview in new tab)   │
+  │    - INVOICING: Delete confirmation now uses styled modal                        │
+  │    - OVERVIEW: Renamed Share Image to Route Summary                              │
+  │    - OVERVIEW: Replaced Copy Text with Export Excel (CSV download)               │
+  │    - OVERVIEW: Store codes exported as text to preserve leading zeros            │
+  │                                                                                 │
+  │  v1.995:                                                                        │
+  │    - PERFORMANCE: Loading screen with progress indicator                        │
+  │    - PERFORMANCE: LocalStorage cache for instant startup (shows data immediately)│
+  │    - PERFORMANCE: Async Sentry loading (non-blocking)                           │
+  │    - PERFORMANCE: CDN preconnect for faster script loading                      │
+  │    - INVOICING: Full invoice generation from deliveries and store rates        │
+  │    - INVOICING: Auto-calculates base rate + extra pallet charges               │
+  │    - INVOICING: Manual items (Holiday, Special Delivery, Moonachie P/U)        │
+  │    - INVOICING: Week selector with quick buttons (This/Last/2 Weeks Ago)       │
+  │    - INVOICING: PDF generation with professional formatting                    │
+  │    - INVOICING: Excel/CSV export for accounting                                │
+  │    - INVOICING: No Charge stores (exempt HQ, etc from billing)                 │
+  │    - INVOICING: Group by Zone → Store → Date (uses State if no Zone)           │
+  │    - INVOICING: 4 view modes (Detailed, By Store, By Zone, Zone Sections)      │
+  │    - OVERVIEW: Equipment conflict alerts (truck/trailer double-booking)        │
+  │    - SETTINGS: Force Log Off All Users (admin can logout everyone)             │
+  │    - COPY ROUTES: Now properly copies pallets, cases, and pallet types         │
+  │    - PRESENCE: Refresh button for online users list                            │
+  │    - PRESENCE: Auto-refresh when opening dropdown                              │
+  │    - SENTRY: Added error monitoring for 99.9% uptime tracking                   │
+  │    - SENTRY: Automatic error capture with stack traces                          │
+  │    - SENTRY: User context tracking (who experienced the error)                  │
+  │    - BUGFIX: Store code type consistency (String() wrapping)                   │
+  │    - BUGFIX: Timezone sync - dates now correctly use local timezone            │
+  │    - BUGFIX: Directory edits no longer disappear (realtime sync conflict)      │
+  │    - BUGFIX: Pallet values no longer disappear (realtime echo protection)      │
+  │    - INVOICING: Currency displays with thousand separators ($1,104.00)         │
+  │    - STORE DIRECTORY: Removed "Remove Duplicates" and "Delete All" buttons    │
+  │    - INVOICING: Pallet count now uses truck spots (Tot column) not raw spots  │
+  │    - BUGFIX: Invoice period dates now show correct dates (timezone fix)       │
+  │    - INVOICING: Save invoices to database with edit and delete options        │
+  │    - INVOICING: Saved invoices list shows all past invoices                   │
+  │    - BOL: Merge pallet indicator style options (6 styles for printer)         │
+  │    - BOL: Legend shows merge indicator with "= Merged Pallets"                │
+  │    - OVERVIEW: No Charge (NC) column for free deliveries (makeup, etc.)       │
+  │                                                                                 │
+  │  v1.97:                                                                         │
+  │    - Data Protection: Click sync status for backup/restore panel                │
+  │    - Data Protection: Save verification (read-back after write)                 │
+  │    - Data Protection: Download full JSON backup anytime                         │
+  │    - Data Protection: View and restore from backup history (last 5)             │
+  │    - Data Protection: Shows last successful save time in header                 │
+  │    - Inactivity timeout: Auto-logout after 1 hour of inactivity                 │
+  │    - Inactivity warning: Modal at 55 minutes with "Stay Logged In" option       │
+  │    - Presence: Improved connection with faster fallback and retry logic         │
+  │    - Share Image: Generate visual route summary for SMS/text sharing            │
+  │    - Share Image: Shows pallet counts with cases - e.g., "2 (86)"               │
+  │    - Share Image: TC (Total Cases) column added before PLT column               │
+  │    - Share Image: Uses driver colors from Driver Preferences                    │
+  │    - Share Image: Compact 8px font for easy phone screenshots                   │
+  │    - Copy Text: Plain text table format for clipboard                           │
+  │    - PLT Display: Pending pallets show "PLT" instead of "?"                     │
+  │    - PLT Input: Type "p", "plt", or "?" to enter pending pallet                 │
+  │    - OFFLINE PROTECTION: Detects connection loss with red warning banner        │
+  │    - OFFLINE PROTECTION: Blocks saves when offline (prevents stale overwrites)  │
+  │    - OFFLINE PROTECTION: Auto-reloads fresh data when connection restored       │
+  │    - OFFLINE PROTECTION: Alerts user after reconnection (30+ sec offline)       │
+  │    - Presence: Improved connection status with visual indicators                │
+  │                                                                                 │
+  │  v1.8:                                                                          │
+  │    - Code reorganization with accurate table of contents                        │
+  │    - Added section markers throughout code                                      │
+  │    - Added quick reference guide                                                │
+  │    - Print Manifest: TC/PLT columns now have black border separators            │
+  │    - Print Manifest: Grand Total row aligned with columns                       │
+  │    - Print Manifest: Shows merged pallets (adjusted count, no indicator)        │
+  │    - Print Manifest: PLT count adjusted for merged pallets (truck spots)        │
+  │    - Overview: Tab key navigates between pallet input boxes                     │
+  │    - Overview: Tot column shows actual pallet count (not truck spots)           │
+  │    - Fixed: Store names now always use Store Directory (not cached route data)  │
+  │    - Fixed: Pending "?" pallets now counted in type columns (FZ, DR, etc)       │
+  │    - Fixed: BOL totals now include pending "?" pallets in type columns          │
+  │    - Fixed: BOL PLT column now accounts for merged pallets (shows truck spots)  │
+  │    - Fixed: Overview TOTAL row now shows merged pallet count (matches stores)   │
+  │    - Print Manifest: Now shows route date (e.g., "Tue 12/16") not print date    │
+  │    - DATA PROTECTION: Auto-backup to localStorage before every cloud save       │
+  │    - DATA PROTECTION: Conflict detection - checks server before saving          │
+  │    - DATA PROTECTION: Smart merge - only updates current date, preserves others │
+  │    - DATA PROTECTION: Backup & Recovery section in Settings                     │
+  │    - DATA PROTECTION: Export/Import full backup as JSON file                    │
+  │    - DATA PROTECTION: Restore from last 5 auto-backups                          │
+  │    - VERSION CHECK: Blocks old versions from saving (prevents overwrites)       │
+  │    - VERSION CHECK: Forces refresh when new version detected                    │
+  │    - VERSION CHECK: App version stored in database with each save               │
+  │                                                                                 │
+  │  v1.7.9:                                                                        │
+  │    - Added "Sort Pallets by Type" button (⇅) in store row actions               │
+  │    - Fixed: Store names fallback to Store Directory when missing                │
+  │    - Fixed: BOL uses route date instead of today's date                         │
+  │    - Fixed: BOL and Print Manifest now show pending "?" pallets                 │
+  │    - Fixed: Print Manifest columns aligned consistently                         │
+  │    - Fixed: Empty pallet cells show "-" instead of blank                        │
+  │    - Fixed: "Copy From" disabled when routes exist on current day               │
+  │    - Fixed: Driver background/border colors restored on Overview                │
+  │                                                                                 │
+  │  v1.7.8: Driver Print Report sort options                                       │
+  │  v1.7.7: Compact mode improvements                                              │
+  │  v1.7.6: Route stats and mileage calculations                                   │
+  │  v1.7.5: PC*Miler secure API integration                                        │
+  │                                                                                 │
+  └─────────────────────────────────────────────────────────────────────────────────┘
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#1976d2">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🚛%3C/text%3E%3C/svg%3E">
+  <title>Logistics Dashboard v26.106</title>
+  
+  <!-- Preconnect to CDNs for faster loading -->
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://browser.sentry-cdn.com">
+  
+  <!-- Critical CSS for loading screen (inline for instant display) -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    #root { height: 100%; overflow: hidden; }
+    
+    /* Loading Screen Styles */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #1a7f4b 0%, #15633b 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      transition: opacity 0.3s ease;
+    }
+    #loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .loading-logo {
+      font-size: 48px;
+      margin-bottom: 20px;
+      animation: bounce 1s infinite;
+    }
+    .loading-text {
+      color: white;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .loading-subtext {
+      color: rgba(255,255,255,0.8);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .loading-progress {
+      margin-top: 20px;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes slideUp {
+      from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+      to { transform: translateX(-50%) translateY(0); opacity: 1; }
+    }
+    
+    /* ===== Auth Screen Styles ===== */
+    .auth-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a7f4b 0%, #15633b 100%);
+    }
+    .auth-box {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 420px;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .auth-input:focus {
+      outline: none;
+      border-color: #1a7f4b;
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      background: #1a7f4b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .auth-btn:hover {
+      background: #15633b;
+    }
+    .auth-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .auth-error {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .auth-success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    
+    /* ===== FHD 1920x1080 Optimization ===== */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a1a1a1;
+    }
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+    @media screen and (min-width: 1920px) {
+      body {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen (shows immediately while scripts load) -->
+  <div id="loading-screen">
+    <div class="loading-logo">🚛</div>
+    <div class="loading-text">Newmans Refrigerated Service</div>
+    <div class="loading-subtext">Loading Dashboard...</div>
+    <div class="loading-spinner"></div>
+    <div class="loading-progress" id="loading-progress">Initializing...</div>
+  </div>
+  
+  <div id="root"></div>
+  
+  <!-- Load scripts with progress updates -->
+  <script>
+    const updateProgress = (text) => {
+      const el = document.getElementById('loading-progress');
+      if (el) el.textContent = text;
+    };
+    updateProgress('Loading React...');
+  </script>
+  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous" onload="updateProgress('Loading React DOM...')"></script>
+  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous" onload="updateProgress('Loading Supabase...')"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2.45.0" integrity="sha384-dGnL7r9uccC9TdSdE05clTJ6esxMU42XBQ1/BWLzKQOBi7qR1aCMRIi0LzUmexIg" crossorigin="anonymous" onload="updateProgress('Starting application...')"></script>
+  
+  <!-- Sentry loaded async (non-blocking) -->
+  <script>
+    // Load Sentry after main app to not block rendering
+    setTimeout(() => {
+      const script = document.createElement('script');
+      script.src = 'https://browser.sentry-cdn.com/8.42.0/bundle.min.js';
+      script.integrity = 'sha384-mnCU8xfJtutEToQVAp8cVl1c5MsLJHnf0uLTs2w7gf115tH/bz7Nwd+LgjiBgW5P';
+      script.crossOrigin = 'anonymous';
+      script.onload = () => {
+        if (window.Sentry && window.initSentry) window.initSentry();
+      };
+      document.head.appendChild(script);
+    }, 100);
+  </script>
+  
+  <!-- Main React Application (Pre-compiled) - v26.106 -->
+  <script type="module" src="./js/app.entry.js?v=26.106"></script>
+</body>
+</html>
