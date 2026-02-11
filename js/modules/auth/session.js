@@ -10,6 +10,12 @@ export function initializeAuthSession({ supabase, setUser, setLoading, setShowPa
     });
   };
 
+  // Keep logout-race state in module closure (avoid leaking globals on window).
+  let signoutGeneration = 0;
+  let justSignedOut = false;
+  let justSignedOutGeneration = -1;
+  let clearSignoutGuardTimer = null;
+
   // Check for recovery token in URL query params (new format)
   const urlParams = new URLSearchParams(window.location.search);
   const type = urlParams.get('type');
@@ -49,16 +55,12 @@ export function initializeAuthSession({ supabase, setUser, setLoading, setShowPa
     setLoading(false);
   });
 
-  // Monotonic signout generation token to avoid short logout/signin races.
-  if (
-    typeof window.__authSignoutGeneration !== 'number' ||
-    !Number.isFinite(window.__authSignoutGeneration)
-  ) {
-    window.__authSignoutGeneration = 0;
-  }
-
   const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
     console.log('Auth event:', event);
+
+    const isGuardedSignoutGap =
+      justSignedOut && justSignedOutGeneration === signoutGeneration;
+
     if (event === 'PASSWORD_RECOVERY') {
       setShowPasswordReset(true);
     } else if (event === 'TOKEN_REFRESHED' && !session) {
@@ -68,33 +70,31 @@ export function initializeAuthSession({ supabase, setUser, setLoading, setShowPa
     } else if (event === 'SIGNED_OUT') {
       console.log('User signed out');
       setUser(null);
+
       // Advance generation and keep a short compatibility guard.
-      window.__authSignoutGeneration = (window.__authSignoutGeneration || 0) + 1;
-      window._justSignedOut = true;
-      const signedOutGeneration = window.__authSignoutGeneration;
-      window.__justSignedOutGeneration = signedOutGeneration;
-      setTimeout(() => {
-        // Clear only if no newer signout has happened.
-        if (window.__justSignedOutGeneration === signedOutGeneration) {
-          window._justSignedOut = false;
+      signoutGeneration += 1;
+      justSignedOut = true;
+      justSignedOutGeneration = signoutGeneration;
+
+      if (clearSignoutGuardTimer) {
+        clearTimeout(clearSignoutGuardTimer);
+      }
+      clearSignoutGuardTimer = setTimeout(() => {
+        if (justSignedOutGeneration === signoutGeneration) {
+          justSignedOut = false;
         }
+        clearSignoutGuardTimer = null;
       }, 2000);
     } else if (event === 'SIGNED_IN') {
       // Only allow explicit sign-in, not from cached session after logout
-      if (
-        window._justSignedOut &&
-        window.__justSignedOutGeneration === (window.__authSignoutGeneration || 0)
-      ) {
+      if (isGuardedSignoutGap) {
         console.log('Ignoring SIGNED_IN event right after logout');
         return;
       }
       applySessionUser(session?.user);
     } else if (event === 'INITIAL_SESSION') {
       // Skip initial session if we just logged out (prevents race condition)
-      if (
-        window._justSignedOut &&
-        window.__justSignedOutGeneration === (window.__authSignoutGeneration || 0)
-      ) {
+      if (isGuardedSignoutGap) {
         console.log('Ignoring INITIAL_SESSION after logout');
         return;
       }
@@ -104,5 +104,11 @@ export function initializeAuthSession({ supabase, setUser, setLoading, setShowPa
     }
   });
 
-  return () => subscription.unsubscribe();
+  return () => {
+    if (clearSignoutGuardTimer) {
+      clearTimeout(clearSignoutGuardTimer);
+      clearSignoutGuardTimer = null;
+    }
+    subscription.unsubscribe();
+  };
 }

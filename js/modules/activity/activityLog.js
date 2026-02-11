@@ -12,6 +12,11 @@ export const logActivityEntry = async ({
   routeDate = null,
   details = null,
 }) => {
+  const toNullableLogValue = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    return String(value);
+  };
+
   if (!user) {
     console.warn('⚠ logActivity skipped - user is null (auth issue?)');
     return;
@@ -27,8 +32,8 @@ export const logActivityEntry = async ({
       entity_id: entityId,
       entity_name: entityName,
       field_changed: fieldChanged,
-      old_value: oldValue ? String(oldValue) : null,
-      new_value: newValue ? String(newValue) : null,
+      old_value: toNullableLogValue(oldValue),
+      new_value: toNullableLogValue(newValue),
       route_date: routeDate,
       details,
     });

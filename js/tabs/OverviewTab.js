@@ -396,6 +396,7 @@ export default function OverviewTab(props){
     formatDateDisplay,
     formatDayName,
     formatDayNumber,
+    escapeHtml,
     isToday,
     navigateWeek,
     getTodayInTimezone,
@@ -487,7 +488,7 @@ routeGroups.forEach((group,gIdx)=>{manifestHTML+=`<div class="page">`;manifestHT
                         <div class="header">
                           <h1>🚛 WAREHOUSE MANIFEST</h1>
                           <p style="font-size: 16px; font-weight: bold; color: #1a7f4b; margin: 4px 0;">📅 ${routeDateShort}</p>
-                          <p><strong>${bolSettings.companyName}</strong> - Printed: ${printTime}</p>
+                          <p><strong>${escapeHtml(bolSettings.companyName)}</strong> - Printed: ${printTime}</p>
                         </div>
                       `;if(groupByRouteNum){manifestHTML+=`<div class="page-title">Route #${group.num} - All Drivers</div>`;}// Pallet Type Legend
 manifestHTML+=`<div style="display: flex; justify-content: center; gap: 12px; padding: 6px; background: #fafafa; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px;">`;activePalletTypes.forEach(pt=>{const eco=getEcoColor(pt.color);manifestHTML+=`<span style="display: inline-flex; align-items: center; gap: 4px; font-size: 9px;">
@@ -519,7 +520,7 @@ manifestHTML+=`<colgroup>
 const routeZonesOrStates=route.stores.map(s=>{const dirStore=storesDirectory.find(ds=>String(ds.code||'').trim()===String(s.code||'').trim());if(!dirStore)return null;return dirStore.zone&&dirStore.zone.trim()!==''?dirStore.zone:dirStore.state;}).filter(Boolean);const uniqueZones=[...new Set(routeZonesOrStates)];const routeZone=uniqueZones.length>0?uniqueZones.join(' & '):'';// Inline warning badge for unconfirmed routes (after zone)
 const inlineWarningBadge=!isZoneFormatConfirmed?'<span style="background: #c62828; color: white; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; margin-left: 10px;">⚠ NOT CONFIRMED - PENDING APPROVAL - DO NOT LOAD</span>':'';// Route header row with type headers
 manifestHTML+=`<tr>
-                          <td colspan="3" style="font-weight: bold; background: ${driverBgColor}; border: 1px solid #000; border-left: none; border-right: none; border-top: none;">📦 ${routeName} &nbsp;&nbsp; 🚛 ${route.truck||'TBD'}${route.trailer?' / '+route.trailer:''}${routeZone?' &nbsp;&nbsp; '+routeZone:''}${inlineWarningBadge}</td>`;routeActivePalletTypes.forEach(pt=>{const cols=Math.max(1,routeMaxPalletsByType[pt.abbrev]);const eco=getEcoColor(pt.color);manifestHTML+=`<td colspan="${cols}" class="center" style="background: ${eco.bg}; color: ${eco.text}; font-weight: bold; border: 1px solid #000;">${pt.abbrev}</td>`;});manifestHTML+=`
+                          <td colspan="3" style="font-weight: bold; background: ${driverBgColor}; border: 1px solid #000; border-left: none; border-right: none; border-top: none;">📦 ${escapeHtml(routeName)} &nbsp;&nbsp; 🚛 ${escapeHtml(route.truck||'TBD')}${escapeHtml(route.trailer?' / '+route.trailer:'')}${routeZone?' &nbsp;&nbsp; '+routeZone:''}${inlineWarningBadge}</td>`;routeActivePalletTypes.forEach(pt=>{const cols=Math.max(1,routeMaxPalletsByType[pt.abbrev]);const eco=getEcoColor(pt.color);manifestHTML+=`<td colspan="${cols}" class="center" style="background: ${eco.bg}; color: ${eco.text}; font-weight: bold; border: 1px solid #000;">${pt.abbrev}</td>`;});manifestHTML+=`
                           <td class="center" style="background: #f5f5f5; font-weight: bold; border: 1px solid #000; border-bottom: 1px solid #000;">TC</td>
                           <td class="center" style="background: #fff3e0; color: #e65100; font-weight: bold; border: 1px solid #000; border-bottom: 1px solid #000;">PLT</td>
                           <td class="center" style="background: #f5f5f5; border: 1px solid #000; border-bottom: 1px solid #000;">✓</td>
@@ -539,8 +540,8 @@ const adjustedPalletCount=storeTotalPallets-linkedCount;groupTotalPallets+=adjus
 groupTotalCases+=storeTotalCases;groupLinkedCount+=linkedCount;// Track total linked for group
 routeActivePalletTypes.forEach(pt=>{groupTotalByType[pt.abbrev]+=palletsByType[pt.abbrev].length;});const rowBg=sIdx%2===1?'background: #fafafa;':'';manifestHTML+=`<tr style="${rowBg}">
                             <td class="center" style="width: 25px; ${lastRowBorder}">${sIdx+1}</td>
-                            <td style="width: 30px; font-weight: bold; ${lastRowBorder}">${store.code||''}</td>
-                            <td style="${lastRowBorder} border-right: 1px solid #000;">${displayStoreName}</td>`;routeActivePalletTypes.forEach(pt=>{const cols=Math.max(1,routeMaxPalletsByType[pt.abbrev]);const pallets=palletsByType[pt.abbrev];const eco=getEcoColor(pt.color);for(let i=0;i<cols;i++){const isLast=i===cols-1;const rightBorder=isLast?'border-right: 1px solid #000;':'';if(i<pallets.length){const pallet=pallets[i];// Display "PLT" for pending pallets instead of "?"
+                            <td style="width: 30px; font-weight: bold; ${lastRowBorder}">${escapeHtml(store.code||'')}</td>
+                            <td style="${lastRowBorder} border-right: 1px solid #000;">${escapeHtml(displayStoreName)}</td>`;routeActivePalletTypes.forEach(pt=>{const cols=Math.max(1,routeMaxPalletsByType[pt.abbrev]);const pallets=palletsByType[pt.abbrev];const eco=getEcoColor(pt.color);for(let i=0;i<cols;i++){const isLast=i===cols-1;const rightBorder=isLast?'border-right: 1px solid #000;':'';if(i<pallets.length){const pallet=pallets[i];// Display "PLT" for pending pallets instead of "?"
 const displayVal=pallet.value==='?'?'PLT':pallet.value;// Merged pallets - no indicator, just show the value
 manifestHTML+=`<td class="center" style="color: ${eco.text}; font-weight: bold; ${lastRowBorder} ${rightBorder}">${displayVal}</td>`;}else{manifestHTML+=`<td class="center" style="color: #bbb; ${lastRowBorder} ${rightBorder}">-</td>`;}}});// Show adjusted pallet count (merged pallets count as 1 truck spot)
 const pltDisplay=linkedCount>0?adjustedPalletCount:storeTotalPallets;manifestHTML+=`
@@ -616,21 +617,21 @@ const storeCountLS=routes.reduce((sum,r)=>sum+r.stores.length,0);let scaleLS=100
                         <div class="header">
                           <h1>⚠ LOADING SEQUENCE</h1>
                           <p style="font-size: ${fitToPage?'13px':'16px'}; font-weight: bold; color: #1a7f4b; margin: 4px 0;">📅 ${routeDateShort}</p>
-                          <p>${bolSettings.companyName} - Printed: ${printTime}</p>
+                          <p>${escapeHtml(bolSettings.companyName)} - Printed: ${printTime}</p>
                         </div>
                         <div class="warning">⚠ LOAD IN THIS ORDER - First item goes to BACK of truck</div>
                     `;routes.forEach((route,rIdx)=>{const driverRoutes=routes.filter(r=>r.driver===route.driver);const routeNum=driverRoutes.indexOf(route)+1;const routeName=route.driver?route.driver+' #'+routeNum:'Route #'+(rIdx+1);// Check if route is confirmed
 const isLoadOrderConfirmed=route.confirmed===true;manifestHTML+=`
                         <div class="route-section" style="${!isLoadOrderConfirmed?'border: 3px solid #c62828 !important;':''}">
                           ${!isLoadOrderConfirmed?'<div style="background: #c62828; color: white; text-align: center; padding: 6px; font-weight: bold; font-size: 11px;">⚠ NOT CONFIRMED - PENDING APPROVAL - DO NOT LOAD ⚠</div>':''}
-                          <div class="route-header">🚛 ${routeName} ${!isLoadOrderConfirmed?'🔴':'✅'} - Truck: ${route.truck||'TBD'}${route.trailer?' / '+route.trailer:''}</div>
+                          <div class="route-header">🚛 ${escapeHtml(routeName)} ${!isLoadOrderConfirmed?'🔴':'✅'} - Truck: ${escapeHtml(route.truck||'TBD')}${escapeHtml(route.trailer?' / '+route.trailer:'')}</div>
                       `;// Reverse order for loading
 const reversedStores=[...route.stores].reverse();reversedStores.forEach((store,sIdx)=>{const originalIdx=route.stores.length-sIdx;const types=store.palletTypes||[];const isLast=sIdx===0;const isFirst=sIdx===reversedStores.length-1;const dirStoreForName=storesDirectory.find(ds=>String(ds.code||'').trim()===String(store.code||'').trim());const displayStoreName=dirStoreForName?.name||store.name||'';manifestHTML+=`
                           <div class="load-item">
                             <div class="load-num">${sIdx+1}</div>
                             <div class="load-details">
-                              <div class="store-name">${store.code||''} - ${displayStoreName}</div>
-                              <div class="store-info">${isLast?'Last Delivery':isFirst?'First Delivery':'Stop '+originalIdx} • ${routeName}</div>
+                              <div class="store-name">${escapeHtml(store.code||'')} - ${escapeHtml(displayStoreName)}</div>
+                              <div class="store-info">${isLast?'Last Delivery':isFirst?'First Delivery':'Stop '+originalIdx} • ${escapeHtml(routeName)}</div>
                             </div>
                             <div class="pallet-tags">
                         `;(store.pallets||[]).forEach((p,pIdx)=>{// Include both numeric values AND "?" pending pallets
@@ -680,7 +681,7 @@ const routeCountSC=routes.length;let scaleSC=100;if(fitToPage){if(routeCountSC>1
                         <div class="header">
                           <h1>📊 ROUTE SUMMARY</h1>
                           <p style="font-size: ${fitToPage?'13px':'16px'}; font-weight: bold; color: #1a7f4b; margin: 4px 0;">📅 ${routeDateShort}</p>
-                          <p>${bolSettings.companyName} - Printed: ${printTime}</p>
+                          <p>${escapeHtml(bolSettings.companyName)} - Printed: ${printTime}</p>
                         </div>
                         <div class="cards-grid">
                     `;let grandTotalPallets=0;const grandTotalByType={};palletTypes.forEach(pt=>{grandTotalByType[pt.abbrev]=0;});routes.forEach((route,rIdx)=>{const driverRoutes=routes.filter(r=>r.driver===route.driver);const routeNum=driverRoutes.indexOf(route)+1;const routeName=route.driver?route.driver+' #'+routeNum:'Route #'+(rIdx+1);const driverInfo=driversDirectory.find(d=>d.name===route.driver||d.firstName===route.driver);const borderColor=driverInfo?.borderColor||'#1976d2';const bgColor=driverInfo?.bgColor||'#e3f2fd';// Check if route is confirmed
@@ -689,7 +690,7 @@ if(p&&typeof p==='number'&&p>0||p==='?'){routeTotal++;grandTotalPallets++;const 
                         <div class="route-card" style="border-color: ${!isCardRouteConfirmed?'#c62828':borderColor};">
                           ${!isCardRouteConfirmed?'<div style="background: #c62828; color: white; text-align: center; padding: 4px 8px; font-size: 10px; font-weight: bold;">⚠ NOT CONFIRMED - DO NOT LOAD</div>':''}
                           <div class="route-card-header" style="background: ${bgColor}; border-color: ${borderColor};">
-                            <h3 style="color: ${borderColor};">🚛 ${routeName} ${!isCardRouteConfirmed?'🔴':'✅'} - Truck: ${route.truck||'TBD'}${route.trailer?' / '+route.trailer:''}</h3>
+                            <h3 style="color: ${borderColor};">🚛 ${escapeHtml(routeName)} ${!isCardRouteConfirmed?'🔴':'✅'} - Truck: ${escapeHtml(route.truck||'TBD')}${escapeHtml(route.trailer?' / '+route.trailer:'')}</h3>
                             <div style="font-size: 11px; color: #666;">${route.stores.length} Stores</div>
                           </div>
                           <div class="route-card-body">
@@ -753,7 +754,7 @@ const typeCountPL=palletTypes.filter(pt=>{let hasStores=false;routes.forEach(rou
                         <div class="header">
                           <h1>🧊 PALLET PICK LIST</h1>
                           <p style="font-size: ${fitToPage?'13px':'16px'}; font-weight: bold; color: #1a7f4b; margin: 4px 0;">📅 ${routeDateShort}</p>
-                          <p>${bolSettings.companyName} - Printed: ${printTime}</p>
+                          <p>${escapeHtml(bolSettings.companyName)} - Printed: ${printTime}</p>
                         </div>
                     `;// Group by type
 const storesByType={};palletTypes.forEach(pt=>{storesByType[pt.abbrev]=[];});routes.forEach((route,rIdx)=>{const driverRoutes=routes.filter(r=>r.driver===route.driver);const routeNum=driverRoutes.indexOf(route)+1;const routeName=route.driver?route.driver+' #'+routeNum:'Route #'+(rIdx+1);route.stores.forEach(store=>{const types=store.palletTypes||[];const countByType={};palletTypes.forEach(pt=>{countByType[pt.abbrev]=0;});(store.pallets||[]).forEach((p,pIdx)=>{// Include both numeric values AND "?" pending pallets
@@ -809,13 +810,13 @@ const storeCountDC=routes.reduce((sum,r)=>sum+r.stores.length,0);let scaleDC=100
                     `;routes.forEach((route,rIdx)=>{const driverRoutes=routes.filter(r=>r.driver===route.driver);const routeNum=driverRoutes.indexOf(route)+1;const routeName=route.driver?route.driver+' #'+routeNum:'Route #'+(rIdx+1);const driverInfo=driversDirectory.find(d=>d.name===route.driver||d.firstName===route.driver);const bgColor=driverInfo?.borderColor||'#ff9800';let routeTotal=0;route.stores.forEach(store=>{(store.pallets||[]).forEach(p=>{if(p&&typeof p==='number'&&p>0||p==='?')routeTotal++;});});manifestHTML+=`
                         <div class="route-page">
                           <div class="driver-header" style="background: ${bgColor};">
-                            👤 ${routeName} &nbsp;&nbsp;|&nbsp;&nbsp; 🚛 Truck: ${route.truck||'TBD'}${route.trailer?' / '+route.trailer:''} &nbsp;&nbsp;|&nbsp;&nbsp; 📦 ${routeTotal} Pallets
+                            👤 ${escapeHtml(routeName)} &nbsp;&nbsp;|&nbsp;&nbsp; 🚛 Truck: ${escapeHtml(route.truck||'TBD')}${escapeHtml(route.trailer?' / '+route.trailer:'')} &nbsp;&nbsp;|&nbsp;&nbsp; 📦 ${routeTotal} Pallets
                           </div>
                           <table class="checklist-table">
                       `;route.stores.forEach((store,sIdx)=>{let storePallets=0;(store.pallets||[]).forEach(p=>{if(p&&typeof p==='number'&&p>0||p==='?')storePallets++;});const dirStoreForName=storesDirectory.find(ds=>String(ds.code||'').trim()===String(store.code||'').trim());const displayStoreName=dirStoreForName?.name||store.name||'';manifestHTML+=`
                           <tr>
                             <td class="checkbox"><div class="checkbox-box"></div></td>
-                            <td><strong>${sIdx+1}. ${store.code||''}</strong> - ${displayStoreName}</td>
+                            <td><strong>${sIdx+1}. ${escapeHtml(store.code||'')}</strong> - ${escapeHtml(displayStoreName)}</td>
                             <td style="text-align: right; width: 80px;"><strong>${storePallets} PLT</strong></td>
                           </tr>
                         `;});manifestHTML+=`
@@ -870,11 +871,11 @@ if(p&&typeof p==='number'&&p>0||p==='?'){const pType=types[pIdx]||palletTypes[0]
 palletTypes.forEach(pt=>{const pallets=palletsByType[pt.abbrev];pallets.forEach((cases,pIdx)=>{manifestHTML+=`
                               <div class="label-tag" style="${!isLabelRouteConfirmed?'border-color: #c62828;':''}">
                                 ${!isLabelRouteConfirmed?'<div style="background: #c62828; color: white; font-size: 8px; font-weight: bold; padding: 2px; margin: -12px -12px 6px -12px; border-radius: 4px 4px 0 0;">⚠ NOT CONFIRMED</div>':''}
-                                <div class="store-code">${store.code||''}</div>
-                                <div class="store-name">${displayStoreName}</div>
+                                <div class="store-code">${escapeHtml(store.code||'')}</div>
+                                <div class="store-name">${escapeHtml(displayStoreName)}</div>
                                 <div class="pallet-info" style="background: ${pt.color};">${pt.abbrev} ${pIdx+1}/${pallets.length}</div>
                                 <div style="font-size: 11px; margin-top: 4px;">${cases==='?'?'PLT (TBD)':cases+' cases'}</div>
-                                <div class="route-info">${routeName} ${!isLabelRouteConfirmed?'🔴':''} • 🚛 ${route.truck||'TBD'}${route.trailer?' / '+route.trailer:''}</div>
+                                <div class="route-info">${escapeHtml(routeName)} ${!isLabelRouteConfirmed?'🔴':''} • 🚛 ${escapeHtml(route.truck||'TBD')}${escapeHtml(route.trailer?' / '+route.trailer:'')}</div>
                               </div>
                             `;});});});});manifestHTML+=`
                         </div>
@@ -982,7 +983,7 @@ const watermarkHTML=hasUnconfirmedRoutes?`
                       <div class="header">
                         <h1>🚛 WAREHOUSE LOADING MANIFEST</h1>
                         <p style="font-size: 14px; font-weight: bold; color: #1a7f4b; margin: 4px 0;">📅 ${routeDateShort}</p>
-                        <p><strong>${bolSettings.companyName}</strong>${compact?'':' - Printed: '+printTime}${fitToPage&&!compact?' - <em>Scaled to fit</em>':''}${compact?' - <em>COMPACT</em>':''}</p>
+                        <p><strong>${escapeHtml(bolSettings.companyName)}</strong>${compact?'':' - Printed: '+printTime}${fitToPage&&!compact?' - <em>Scaled to fit</em>':''}${compact?' - <em>COMPACT</em>':''}</p>
                       </div>
                   `;let grandTotalPallets=0;const grandTotalByType={};palletTypes.forEach(pt=>{grandTotalByType[pt.abbrev]=0;});routes.forEach((route,idx)=>{const driverRoutes=routes.filter(r=>r.driver===route.driver);const routeNum=driverRoutes.indexOf(route)+1;const routeName=route.driver?route.driver+' #'+routeNum:'Route #'+(idx+1);const driverInfo=driversDirectory.find(d=>d.name===route.driver||d.firstName===route.driver);const bgColor=driverInfo?.bgColor||'#f5f5f5';const borderColor=driverInfo?.borderColor||'#666';// Check if route is confirmed
 const isRouteConfirmedManifest=route.confirmed===true;// Calculate route totals
@@ -996,8 +997,8 @@ const routeWarningBanner=!isRouteConfirmedManifest?`
                       <div class="route-section" style="border: ${compact?'2px':'3px'} solid ${!isRouteConfirmedManifest?'#c62828':borderColor}; border-radius: ${compact?'4px':'8px'};">
                         ${routeWarningBanner}
                         <div class="route-header" style="background: ${bgColor}; border-bottom: ${compact?'1px':'2px'} solid ${borderColor}; color: ${borderColor}; ${!isRouteConfirmedManifest?'border-radius: 0;':''}">
-                          <span>${compact?'':'📦 '}${routeName} - ${route.stores.length} Stops ${!isRouteConfirmedManifest?'🔴':'✅'}</span>
-                          <span class="truck-info" style="border: ${compact?'1px':'2px'} solid ${borderColor}; color: ${borderColor}; font-weight: bold;">${compact?'':'🚛 '}TRUCK: ${route.truck||'TBD'}${route.trailer?' / '+route.trailer:''}</span>
+                          <span>${compact?'':'📦 '}${escapeHtml(routeName)} - ${route.stores.length} Stops ${!isRouteConfirmedManifest?'🔴':'✅'}</span>
+                          <span class="truck-info" style="border: ${compact?'1px':'2px'} solid ${borderColor}; color: ${borderColor}; font-weight: bold;">${compact?'':'🚛 '}TRUCK: ${escapeHtml(route.truck||'TBD')}${escapeHtml(route.trailer?' / '+route.trailer:'')}</span>
                           <span style="font-weight: bold;">PLT: ${routeTotal}</span>
                         </div>
                         <table>
@@ -1019,8 +1020,8 @@ const palletsWithValues=[];(store.pallets||[]).forEach((p,idx)=>{// Include both
 if(p&&typeof p==='number'&&p>0||p==='?'){palletsWithValues.push({value:p,index:idx,type:types[idx],isLinked:links[idx]});}});const storeTotal=palletsWithValues.length;manifestHTML+=`
                         <tr>
                           <td class="center" style="font-weight: bold;">${sIdx+1}</td>
-                          <td style="font-weight: bold;">${store.code||''}</td>
-                          <td>${displayStoreName}</td>
+                          <td style="font-weight: bold;">${escapeHtml(store.code||'')}</td>
+                          <td>${escapeHtml(displayStoreName)}</td>
                       `;// Add individual pallet cells with merged border styling
 for(let i=0;i<maxPallets;i++){if(i<palletsWithValues.length){const pallet=palletsWithValues[i];const nextPallet=palletsWithValues[i+1];const pType=pallet.type||palletTypes[0]?.abbrev||'FZ';const normalizedType=pType==='F'?'FZ':pType==='D'?'DR':pType==='S'?'SP':pType;const typeConfig=palletTypes.find(pt=>pt.abbrev===normalizedType)||palletTypes[0];// Check if this pallet is linked to previous or next is linked to this
 const isLinkedToPrev=pallet.isLinked;const isLinkedToNext=nextPallet&&nextPallet.isLinked;if(compact){// Compact mode: simple text with color
@@ -1097,9 +1098,9 @@ routesHTML+=`
                       <div style="margin-bottom: 8px; background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 2px solid ${!isRouteSummaryConfirmed?'#c62828':driverBgColor};">
                         ${summaryRouteWarning}
                         <div style="background: ${driverBgColor}; color: white; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center;">
-                          <span style="font-size: 9px; font-weight: 700;">${routeName} ${!isRouteSummaryConfirmed?'🔴':'✅'}</span>
+                          <span style="font-size: 9px; font-weight: 700;">${escapeHtml(routeName)} ${!isRouteSummaryConfirmed?'🔴':'✅'}</span>
                           <span style="font-size: 8px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px;">
-                            Truck: ${route.truck||'TBD'}${route.trailer?' | Tr: '+route.trailer:''}
+                            Truck: ${escapeHtml(route.truck||'TBD')}${route.trailer?' | Tr: '+route.trailer:''}
                           </span>
                         </div>
                         <table style="width: 100%; border-collapse: collapse; font-size: 8px;">
