@@ -815,7 +815,16 @@
     }, 100);
   </script>
   
-  <!-- Main React Application (Bundled) - v26.114 -->
+  <!-- Main React Application (Bundled) - v26.115 -->
   <script src="./js/dist/app.bundle.js?v=26.115" onerror="showFatalLoadError('Failed loading app bundle')"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js?v=26.115').catch((error) => {
+          console.warn('Service worker registration failed:', error);
+        });
+      });
+    }
+  </script>
 </body>
 </html>

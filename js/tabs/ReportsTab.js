@@ -1,4 +1,4 @@
-export default function ReportsTab(props){
+function ReportsTab(props){
   const {
     React,
     bolSettings,
@@ -176,3 +176,5 @@ const dailyData={};routesInRange.forEach(route=>{if(!dailyData[route.date]){dail
                               </body></html>
                             `;const printWindow=window.open('','_blank');printWindow.document.write(printContent);printWindow.document.close();printWindow.print();},style:{background:'#333',color:'white',border:'none',borderRadius:'6px',padding:'12px 32px',cursor:'pointer',fontWeight:500}},"\uD83D\uDDA8\uFE0F Print Summary Report")))));})());
 }
+
+export default window.React.memo(ReportsTab);
