@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js?v=26.110';
+import {syncLog} from './syncDebug.js?v=26.114';
 export const setupOnlineOfflineSync = ({
   supabase,
   offlineTimestamp,
@@ -173,6 +173,7 @@ export const setupConfigRealtimeSync = ({
   setTractorsDirectory,
   setPalletTypes,
   setSavedInvoices,
+  onStatusChange,
 }) => {
   const configSubscription = supabase
     .channel('config_realtime')
@@ -206,6 +207,7 @@ export const setupConfigRealtimeSync = ({
     })
     .subscribe((status) => {
       syncLog('📡 Config subscription:', status);
+      if (typeof onStatusChange === 'function') onStatusChange(status);
     });
 
   return () => {

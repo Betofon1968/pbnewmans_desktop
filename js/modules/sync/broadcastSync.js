@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js?v=26.110';
+import {syncLog} from './syncDebug.js?v=26.114';
 
 export const setupRouteBroadcastSync = ({
   supabase,

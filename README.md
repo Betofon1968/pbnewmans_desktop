@@ -11,8 +11,19 @@ Desktop-first logistics dashboard for route planning, pallet tracking, BOL gener
 - Supabase realtime sync
 
 ## Tech Stack
-- React (no build step, browser modules)
+- React (bundled with esbuild)
 - Supabase (Auth, Postgres, Realtime)
+
+## Build Bundles
+```bash
+cd "/Users/betofonseca/Documents/New project/logistics-dashboard-v27.35"
+npm install
+npm run build
+```
+
+Notes:
+- `js/dist/vendor.bundle.js` includes React, ReactDOM, and Supabase locally.
+- App startup does not depend on `unpkg.com`.
 
 ## Run Locally
 ```bash

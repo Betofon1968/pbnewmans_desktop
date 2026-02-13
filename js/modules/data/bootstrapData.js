@@ -1,4 +1,4 @@
-import {setupConfigRealtimeSync} from '../sync/networkSync.js?v=26.110';
+import {setupConfigRealtimeSync} from '../sync/networkSync.js?v=26.114';
 
 const mapRouteRowToClient = (route) => ({
   id: route.id,
@@ -52,7 +52,11 @@ export const setupBootstrapData = ({
   deferredCacheWrite,
   setSyncStatus,
   isInitialLoad,
+  onConfigStatusChange,
 }) => {
+  let isDisposed = false;
+  let prefetchTimeoutId = null;
+
   const loadData = async () => {
     try {
       const currentDate = selectedDateRef.current;
@@ -117,7 +121,8 @@ export const setupBootstrapData = ({
           lastSavedConfig.current = JSON.stringify(buildConfigSnapshot(configData));
         }
 
-        setTimeout(async () => {
+        prefetchTimeoutId = setTimeout(async () => {
+          if (isDisposed) return;
           console.log('📦 Background prefetch: loading surrounding dates...');
           const today = new Date(currentDate + 'T12:00:00');
           const startDate = new Date(today);
@@ -127,7 +132,9 @@ export const setupBootstrapData = ({
           const startDateStr = startDate.toLocaleDateString('en-CA');
           const endDateStr = endDate.toLocaleDateString('en-CA');
 
+          let didEnterServerUpdate = false;
           enterServerUpdate();
+          didEnterServerUpdate = true;
           try {
             const { data: prefetchData, error } = await supabase
               .from('logistics_routes')
@@ -137,6 +144,8 @@ export const setupBootstrapData = ({
               .neq('route_date', currentDate)
               .order('route_date', { ascending: true })
               .order('route_order', { ascending: true });
+
+            if (isDisposed) return;
 
             if (error) {
               console.error('Background prefetch error:', error);
@@ -163,7 +172,9 @@ export const setupBootstrapData = ({
           } catch (err) {
             console.error('Background prefetch failed:', err);
           } finally {
-            exitServerUpdate();
+            if (didEnterServerUpdate) {
+              exitServerUpdate();
+            }
           }
         }, 500);
 
@@ -224,9 +235,15 @@ export const setupBootstrapData = ({
     setTractorsDirectory,
     setPalletTypes,
     setSavedInvoices,
+    onStatusChange: onConfigStatusChange,
   });
 
   return () => {
+    isDisposed = true;
+    if (prefetchTimeoutId) {
+      clearTimeout(prefetchTimeoutId);
+      prefetchTimeoutId = null;
+    }
     cleanupConfigRealtime();
   };
 };

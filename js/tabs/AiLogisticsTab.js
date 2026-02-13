@@ -1,37 +1,20 @@
 export default function AiLogisticsTab(props){
   const {
     React,
-    supabase,
-    a,
     addTruckToDirectory,
     aiLogisticsSubTab,
-    b,
-    d,
-    day,
     driversDirectory,
-    e,
     hasPendingChanges,
-    idx,
-    newDays,
-    newId,
-    newTypes,
-    p,
-    pType,
     palletTypes,
-    prev,
     removeTruckFromDirectory,
-    s,
     setAiLogisticsSubTab,
     setPalletTypes,
-    store,
     storesDirectory,
-    subTab,
-    truck,
     truckStatuses,
     trucksDirectory,
     updateStoreDirectory,
     updateTruckDirectory,
-  } = props.app;
+  } = props;
   const sortedStoresDirectory=React.useMemo(
     ()=>[...storesDirectory].sort((a,b)=>String(a.code||'').localeCompare(String(b.code||''))),
     [storesDirectory]

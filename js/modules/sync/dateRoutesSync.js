@@ -1,4 +1,44 @@
-import {syncLog} from './syncDebug.js?v=26.110';
+import {syncLog} from './syncDebug.js?v=26.114';
+
+const getActiveDirtyFields = ({ dirtyFields, dirtyFieldTimestamps, lastAcknowledgedSaveAt }) => {
+  if (!dirtyFields) return new Set();
+
+  const active = new Set();
+  const lastAck = Number(lastAcknowledgedSaveAt) || 0;
+  const timestamps = dirtyFieldTimestamps && typeof dirtyFieldTimestamps === 'object' ? dirtyFieldTimestamps : {};
+
+  const addIfActive = (fieldName, explicitTimestamp) => {
+    if (typeof fieldName !== 'string' || fieldName.length === 0) return;
+    const fieldTimestamp = Number(explicitTimestamp || timestamps[fieldName] || 0);
+    // If no timestamp exists (legacy state), keep legacy behavior and treat as active dirty.
+    if (!fieldTimestamp || fieldTimestamp > lastAck) {
+      active.add(fieldName);
+    }
+  };
+
+  if (dirtyFields instanceof Set) {
+    dirtyFields.forEach((fieldName) => addIfActive(fieldName));
+    return active;
+  }
+
+  if (Array.isArray(dirtyFields)) {
+    dirtyFields.forEach((fieldName) => addIfActive(fieldName));
+    return active;
+  }
+
+  if (typeof dirtyFields === 'object') {
+    if (dirtyFields.fields && typeof dirtyFields.fields === 'object') {
+      Object.entries(dirtyFields.fields).forEach(([fieldName, fieldTimestamp]) =>
+        addIfActive(fieldName, fieldTimestamp)
+      );
+      return active;
+    }
+    Object.keys(dirtyFields).forEach((fieldName) => addIfActive(fieldName));
+  }
+
+  return active;
+};
+
 export const setupDateRoutesSync = ({
   selectedDate,
   supabase,
@@ -8,6 +48,8 @@ export const setupDateRoutesSync = ({
   exitServerUpdate,
   setRoutesByDate,
   dirtyFieldsByRoute,
+  dirtyFieldUpdatedAtByRouteRef,
+  dirtyFieldAckAtByRouteRef,
   mergeServerRouteIntoLocal,
   mapRouteRecordToClientRoute,
   lastAppliedRealtimeAtByDateRef,
@@ -94,11 +136,24 @@ export const setupDateRoutesSync = ({
               const serverRouteObj = mapRouteRecordToClientRoute(route);
 
               const dirtyFields = dirtyFieldsByRoute.current[route.id];
+              const dirtyFieldTimestamps = dirtyFieldUpdatedAtByRouteRef?.current?.[route.id];
+              const lastAcknowledgedSaveAt = dirtyFieldAckAtByRouteRef?.current?.[route.id] || 0;
+              const activeDirtyFields = getActiveDirtyFields({
+                dirtyFields,
+                dirtyFieldTimestamps,
+                lastAcknowledgedSaveAt,
+              });
+              if (dirtyFields && activeDirtyFields.size === 0) {
+                delete dirtyFieldsByRoute.current[route.id];
+                if (dirtyFieldUpdatedAtByRouteRef?.current) {
+                  delete dirtyFieldUpdatedAtByRouteRef.current[route.id];
+                }
+              }
               let finalRouteObj;
-              if (dirtyFields && dirtyFields.size > 0 && existingIdx >= 0) {
+              if (activeDirtyFields.size > 0 && existingIdx >= 0) {
                 const localRoute = updated[date][existingIdx];
-                finalRouteObj = mergeServerRouteIntoLocal(localRoute, serverRouteObj, dirtyFields);
-                syncLog('🔀 Smart merge applied for route', route.id);
+                finalRouteObj = mergeServerRouteIntoLocal(localRoute, serverRouteObj, activeDirtyFields);
+                syncLog('🔀 Smart merge applied for route', route.id, 'fields:', Array.from(activeDirtyFields));
               } else {
                 finalRouteObj = serverRouteObj;
               }

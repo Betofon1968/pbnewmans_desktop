@@ -586,10 +586,9 @@
   <meta name="theme-color" content="#1976d2">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🚛%3C/text%3E%3C/svg%3E">
-  <title>Logistics Dashboard v26.110</title>
+  <title>Logistics Dashboard v26.115</title>
   
-  <!-- Preconnect to CDNs for faster loading -->
-  <link rel="preconnect" href="https://unpkg.com">
+  <!-- Preconnect only for optional monitoring CDN -->
   <link rel="preconnect" href="https://browser.sentry-cdn.com">
   
   <!-- Critical CSS for loading screen (inline for instant display) -->
@@ -786,11 +785,17 @@
       const el = document.getElementById('loading-progress');
       if (el) el.textContent = text;
     };
-    updateProgress('Loading React...');
+    const showFatalLoadError = (message) => {
+      updateProgress(message);
+      const spinner = document.querySelector('.loading-spinner');
+      if (spinner) spinner.style.display = 'none';
+      const subtext = document.querySelector('.loading-subtext');
+      if (subtext) subtext.textContent = 'Please refresh. If this keeps happening, re-upload bundle files.';
+    };
+    window.showFatalLoadError = showFatalLoadError;
+    updateProgress('Loading core bundle...');
   </script>
-  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous" onload="updateProgress('Loading React DOM...')"></script>
-  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous" onload="updateProgress('Loading Supabase...')"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2.45.0" integrity="sha384-dGnL7r9uccC9TdSdE05clTJ6esxMU42XBQ1/BWLzKQOBi7qR1aCMRIi0LzUmexIg" crossorigin="anonymous" onload="updateProgress('Starting application...')"></script>
+  <script src="./js/dist/vendor.bundle.js?v=26.115" onload="updateProgress('Loading application...')" onerror="showFatalLoadError('Failed loading vendor bundle')"></script>
   
   <!-- Sentry loaded async (non-blocking) -->
   <script>
@@ -803,11 +808,14 @@
       script.onload = () => {
         if (window.Sentry && window.initSentry) window.initSentry();
       };
+      script.onerror = () => {
+        console.warn('Sentry CDN unavailable. Continuing without monitoring.');
+      };
       document.head.appendChild(script);
     }, 100);
   </script>
   
-  <!-- Main React Application (Pre-compiled) - v26.110 -->
-  <script type="module" src="./js/app.entry.js?v=26.110"></script>
+  <!-- Main React Application (Bundled) - v26.114 -->
+  <script src="./js/dist/app.bundle.js?v=26.115" onerror="showFatalLoadError('Failed loading app bundle')"></script>
 </body>
 </html>
