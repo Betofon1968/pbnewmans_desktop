@@ -174,43 +174,72 @@ export const setupConfigRealtimeSync = ({
   setPalletTypes,
   setSavedInvoices,
   onStatusChange,
+  onReconnectReady,
 }) => {
-  const configSubscription = supabase
-    .channel('config_realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'logistics_config' }, (payload) => {
-      const currentUserName = userNameRef.current;
-      if (payload.new && payload.new.updated_by === currentUserName) return;
-      if (hasPendingChanges.current) return;
+  let disposed = false;
+  let configSubscription = null;
 
-      if (payload.new) {
-        syncLog('📡 Config updated from:', payload.new.updated_by);
+  const removeConfigSubscription = () => {
+    if (!configSubscription) return;
+    supabase.removeChannel(configSubscription);
+    configSubscription = null;
+  };
 
-        if (!IS_BETA_BUILD && payload.new.app_version && isNewerVersion(payload.new.app_version, APP_VERSION)) {
-          syncLog(`⚠ Version mismatch detected! Server: ${payload.new.app_version}, Local: ${APP_VERSION}`);
-          setVersionMismatch({ serverVersion: payload.new.app_version });
-          return;
+  const subscribeConfig = () => {
+    if (disposed) return;
+    removeConfigSubscription();
+    configSubscription = supabase
+      .channel('config_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'logistics_config' }, (payload) => {
+        const currentUserName = userNameRef.current;
+        if (payload.new && payload.new.updated_by === currentUserName) return;
+        if (hasPendingChanges.current) return;
+
+        if (payload.new) {
+          syncLog('📡 Config updated from:', payload.new.updated_by);
+
+          if (!IS_BETA_BUILD && payload.new.app_version && isNewerVersion(payload.new.app_version, APP_VERSION)) {
+            syncLog(`⚠ Version mismatch detected! Server: ${payload.new.app_version}, Local: ${APP_VERSION}`);
+            setVersionMismatch({ serverVersion: payload.new.app_version });
+            return;
+          }
+
+          enterServerUpdate();
+          try {
+            if (payload.new.stores_directory) setStoresDirectory(payload.new.stores_directory);
+            if (payload.new.drivers_directory) setDriversDirectory(payload.new.drivers_directory);
+            if (payload.new.trucks_directory) setTrucksDirectory(payload.new.trucks_directory);
+            if (payload.new.trailers_directory) setTrailersDirectory(payload.new.trailers_directory);
+            if (payload.new.tractors_directory) setTractorsDirectory(payload.new.tractors_directory);
+            if (payload.new.pallet_types) setPalletTypes(payload.new.pallet_types);
+            if (payload.new.saved_invoices) setSavedInvoices(payload.new.saved_invoices);
+          } finally {
+            setTimeout(() => exitServerUpdate(), 300);
+          }
         }
+      })
+      .subscribe((status) => {
+        syncLog('📡 Config subscription:', status);
+        if (typeof onStatusChange === 'function') onStatusChange(status);
+      });
+  };
 
-        enterServerUpdate();
-        try {
-          if (payload.new.stores_directory) setStoresDirectory(payload.new.stores_directory);
-          if (payload.new.drivers_directory) setDriversDirectory(payload.new.drivers_directory);
-          if (payload.new.trucks_directory) setTrucksDirectory(payload.new.trucks_directory);
-          if (payload.new.trailers_directory) setTrailersDirectory(payload.new.trailers_directory);
-          if (payload.new.tractors_directory) setTractorsDirectory(payload.new.tractors_directory);
-          if (payload.new.pallet_types) setPalletTypes(payload.new.pallet_types);
-          if (payload.new.saved_invoices) setSavedInvoices(payload.new.saved_invoices);
-        } finally {
-          setTimeout(() => exitServerUpdate(), 300);
-        }
-      }
-    })
-    .subscribe((status) => {
-      syncLog('📡 Config subscription:', status);
-      if (typeof onStatusChange === 'function') onStatusChange(status);
+  if (typeof onReconnectReady === 'function') {
+    onReconnectReady(() => {
+      if (disposed) return false;
+      syncLog('🔄 Reconnecting config subscription');
+      subscribeConfig();
+      return true;
     });
+  }
+
+  subscribeConfig();
 
   return () => {
-    supabase.removeChannel(configSubscription);
+    disposed = true;
+    if (typeof onReconnectReady === 'function') {
+      onReconnectReady(null);
+    }
+    removeConfigSubscription();
   };
 };

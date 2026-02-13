@@ -1,8 +1,11 @@
 export function useSyncDebug({ React }) {
-  const { useState, useCallback, useRef } = React;
+  const { useState, useCallback, useRef, useEffect } = React;
 
   const CRITICAL_CHANNELS = ['presence', 'routes', 'broadcastDelete', 'broadcastUpdate', 'config'];
   const DEGRADED_STATUSES = new Set(['CLOSED', 'CHANNEL_ERROR', 'TIMED_OUT']);
+  const RECONNECT_TRIGGER_MS = 15000;
+  const RECONNECT_COOLDOWN_MS = 20000;
+  const RECONNECT_SCAN_INTERVAL_MS = 3000;
   const normalizeChannelStatus = (status) => String(status || 'INIT').toUpperCase();
 
   const [syncDebugEnabled, setSyncDebugEnabledState] = useState(() => {
@@ -34,6 +37,9 @@ export function useSyncDebug({ React }) {
     broadcastUpdate: 'INIT',
     config: 'INIT',
   });
+  const channelReconnectorsRef = useRef({});
+  const degradedSinceByChannelRef = useRef({});
+  const lastReconnectAttemptByChannelRef = useRef({});
   const hadAllSubscribedRef = useRef(false);
 
   const deriveConnectionState = useCallback((statuses) => {
@@ -64,6 +70,15 @@ export function useSyncDebug({ React }) {
     const nextStatuses = { ...channelStatusesRef.current, [channel]: normalizedStatus };
     channelStatusesRef.current = nextStatuses;
 
+    if (DEGRADED_STATUSES.has(normalizedStatus)) {
+      if (!degradedSinceByChannelRef.current[channel]) {
+        degradedSinceByChannelRef.current[channel] = Date.now();
+      }
+    } else {
+      delete degradedSinceByChannelRef.current[channel];
+      delete lastReconnectAttemptByChannelRef.current[channel];
+    }
+
     const now = new Date().toISOString();
     const connection = deriveConnectionState(nextStatuses);
 
@@ -82,6 +97,19 @@ export function useSyncDebug({ React }) {
       return next;
     });
   }, [deriveConnectionState]);
+
+  const registerChannelReconnect = useCallback((channel, reconnectCallback) => {
+    if (!channel) return;
+
+    if (typeof reconnectCallback === 'function') {
+      channelReconnectorsRef.current[channel] = reconnectCallback;
+      return;
+    }
+
+    delete channelReconnectorsRef.current[channel];
+    delete degradedSinceByChannelRef.current[channel];
+    delete lastReconnectAttemptByChannelRef.current[channel];
+  }, []);
 
   const pushSyncEvent = useCallback((message, meta = {}) => {
     setSyncEvents((prev) => {
@@ -111,11 +139,63 @@ export function useSyncDebug({ React }) {
     }
   }, [syncEvents]);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (!navigator.onLine) return;
+
+      const now = Date.now();
+      CRITICAL_CHANNELS.forEach((channel) => {
+        const status = normalizeChannelStatus(channelStatusesRef.current[channel]);
+        if (!DEGRADED_STATUSES.has(status)) return;
+
+        const degradedSince = degradedSinceByChannelRef.current[channel];
+        if (!degradedSince || now - degradedSince < RECONNECT_TRIGGER_MS) return;
+
+        const lastAttemptAt = lastReconnectAttemptByChannelRef.current[channel] || 0;
+        if (now - lastAttemptAt < RECONNECT_COOLDOWN_MS) return;
+
+        const reconnectCallback = channelReconnectorsRef.current[channel];
+        if (typeof reconnectCallback !== 'function') return;
+
+        lastReconnectAttemptByChannelRef.current[channel] = now;
+        pushSyncEvent(`🔄 Reconnect requested for ${channel} (${status})`, {
+          type: 'sync-monitor',
+          channel,
+          status,
+        });
+
+        try {
+          const maybePromise = reconnectCallback();
+          if (maybePromise && typeof maybePromise.catch === 'function') {
+            maybePromise.catch((error) => {
+              console.warn(`Reconnect callback failed for ${channel}:`, error);
+              pushSyncEvent(`❌ Reconnect failed for ${channel}: ${error?.message || error}`, {
+                type: 'sync-monitor',
+                channel,
+                status: 'RECONNECT_FAILED',
+              });
+            });
+          }
+        } catch (error) {
+          console.warn(`Reconnect callback failed for ${channel}:`, error);
+          pushSyncEvent(`❌ Reconnect failed for ${channel}: ${error?.message || error}`, {
+            type: 'sync-monitor',
+            channel,
+            status: 'RECONNECT_FAILED',
+          });
+        }
+      });
+    }, RECONNECT_SCAN_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [pushSyncEvent]);
+
   return {
     syncDebugEnabled,
     setSyncDebugEnabled,
     syncHealth,
     registerChannelStatus,
+    registerChannelReconnect,
     connectionState: syncHealth.globalConnection,
     allCriticalSubscribed: syncHealth.allCriticalSubscribed,
     syncEvents,

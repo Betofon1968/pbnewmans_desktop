@@ -16,6 +16,7 @@ export const setupRouteBroadcastSync = ({
   onDeleteStatus,
   onUpdateStatus,
   onBroadcastEvent,
+  onReconnectReady,
   coalesceWindowMs = 450,
   rowCoverageMs = 900,
   recentApplySuppressionMs = 500,
@@ -25,6 +26,8 @@ export const setupRouteBroadcastSync = ({
   const serverUpdateExitTimers = new Set();
   const appliedRealtimeRef = lastAppliedRealtimeAtByDateRef || { current: {} };
   const rowRealtimeRef = lastRowRealtimeAtByDateRef || { current: {} };
+  let deleteChannel = null;
+  let updateChannel = null;
   let disposed = false;
 
   const scheduleExitServerUpdate = (delayMs = 300) => {
@@ -103,68 +106,117 @@ export const setupRouteBroadcastSync = ({
     pendingReloadTimersByDate.set(routeDate, timer);
   };
 
-  const deleteChannel = supabase
-    .channel('route-deletions')
-    .on('broadcast', { event: 'route-deleted' }, async (payload) => {
-      const { routeId, routeDate, deletedBy, sessionId: senderSessionId } = payload.payload || {};
-      if (!routeDate) return;
-      if (senderSessionId && senderSessionId === sessionId.current) return;
+  const removeDeleteChannel = () => {
+    const channelToRemove = deleteChannel || deleteChannelRef.current;
+    if (!channelToRemove) return;
+    supabase.removeChannel(channelToRemove);
+    if (deleteChannelRef.current === channelToRemove) {
+      deleteChannelRef.current = null;
+    }
+    deleteChannel = null;
+  };
 
-      syncLog('📡 Route deletion broadcast received:', routeId, 'from:', deletedBy);
-      if (typeof onBroadcastEvent === 'function') {
-        onBroadcastEvent({
-          type: 'route-deleted',
-          routeDate,
-          routeId,
-          user: deletedBy,
-          receivedAt: Date.now(),
-        });
-      }
-      scheduleCoalescedReload(routeDate, 'route-deleted broadcast', Date.now());
-    })
-    .subscribe((status) => {
-      syncLog('📡 Delete broadcast channel:', status);
-      if (typeof onDeleteStatus === 'function') {
-        onDeleteStatus(status);
-      }
+  const removeUpdateChannel = () => {
+    const channelToRemove = updateChannel || updateChannelRef.current;
+    if (!channelToRemove) return;
+    supabase.removeChannel(channelToRemove);
+    if (updateChannelRef.current === channelToRemove) {
+      updateChannelRef.current = null;
+    }
+    updateChannel = null;
+  };
+
+  const subscribeDeleteChannel = () => {
+    if (disposed) return;
+    removeDeleteChannel();
+    deleteChannel = supabase
+      .channel('route-deletions')
+      .on('broadcast', { event: 'route-deleted' }, async (payload) => {
+        const { routeId, routeDate, deletedBy, sessionId: senderSessionId } = payload.payload || {};
+        if (!routeDate) return;
+        if (senderSessionId && senderSessionId === sessionId.current) return;
+
+        syncLog('📡 Route deletion broadcast received:', routeId, 'from:', deletedBy);
+        if (typeof onBroadcastEvent === 'function') {
+          onBroadcastEvent({
+            type: 'route-deleted',
+            routeDate,
+            routeId,
+            user: deletedBy,
+            receivedAt: Date.now(),
+          });
+        }
+        scheduleCoalescedReload(routeDate, 'route-deleted broadcast', Date.now());
+      })
+      .subscribe((status) => {
+        syncLog('📡 Delete broadcast channel:', status);
+        if (typeof onDeleteStatus === 'function') {
+          onDeleteStatus(status);
+        }
+      });
+    deleteChannelRef.current = deleteChannel;
+  };
+
+  const subscribeUpdateChannel = () => {
+    if (disposed) return;
+    removeUpdateChannel();
+    updateChannel = supabase
+      .channel('route-updates')
+      .on('broadcast', { event: 'routes-changed' }, async (payload) => {
+        const { routeDate, updatedBy, sessionId: senderSessionId } = payload.payload || {};
+        if (!routeDate) return;
+        if (senderSessionId && senderSessionId === sessionId.current) return;
+
+        syncLog('📡 Routes change notification received for', routeDate, 'from:', updatedBy);
+        if (typeof onBroadcastEvent === 'function') {
+          onBroadcastEvent({
+            type: 'routes-changed',
+            routeDate,
+            user: updatedBy,
+            receivedAt: Date.now(),
+          });
+        }
+        scheduleCoalescedReload(routeDate, 'routes-changed broadcast', Date.now());
+      })
+      .subscribe((status) => {
+        syncLog('📡 Update broadcast channel:', status);
+        if (typeof onUpdateStatus === 'function') {
+          onUpdateStatus(status);
+        }
+      });
+    updateChannelRef.current = updateChannel;
+  };
+
+  if (typeof onReconnectReady === 'function') {
+    onReconnectReady('broadcastDelete', () => {
+      if (disposed) return false;
+      syncLog('🔄 Reconnecting delete broadcast channel');
+      subscribeDeleteChannel();
+      return true;
     });
-
-  const updateChannel = supabase
-    .channel('route-updates')
-    .on('broadcast', { event: 'routes-changed' }, async (payload) => {
-      const { routeDate, updatedBy, sessionId: senderSessionId } = payload.payload || {};
-      if (!routeDate) return;
-      if (senderSessionId && senderSessionId === sessionId.current) return;
-
-      syncLog('📡 Routes change notification received for', routeDate, 'from:', updatedBy);
-      if (typeof onBroadcastEvent === 'function') {
-        onBroadcastEvent({
-          type: 'routes-changed',
-          routeDate,
-          user: updatedBy,
-          receivedAt: Date.now(),
-        });
-      }
-      scheduleCoalescedReload(routeDate, 'routes-changed broadcast', Date.now());
-    })
-    .subscribe((status) => {
-      syncLog('📡 Update broadcast channel:', status);
-      if (typeof onUpdateStatus === 'function') {
-        onUpdateStatus(status);
-      }
+    onReconnectReady('broadcastUpdate', () => {
+      if (disposed) return false;
+      syncLog('🔄 Reconnecting update broadcast channel');
+      subscribeUpdateChannel();
+      return true;
     });
+  }
 
-  deleteChannelRef.current = deleteChannel;
-  updateChannelRef.current = updateChannel;
+  subscribeDeleteChannel();
+  subscribeUpdateChannel();
 
   return () => {
     disposed = true;
+    if (typeof onReconnectReady === 'function') {
+      onReconnectReady('broadcastDelete', null);
+      onReconnectReady('broadcastUpdate', null);
+    }
     pendingReloadTimersByDate.forEach((timerId) => clearTimeout(timerId));
     pendingReloadTimersByDate.clear();
     pendingReloadMetaByDate.clear();
     serverUpdateExitTimers.forEach((timerId) => clearTimeout(timerId));
     serverUpdateExitTimers.clear();
-    if (deleteChannelRef.current) supabase.removeChannel(deleteChannelRef.current);
-    if (updateChannelRef.current) supabase.removeChannel(updateChannelRef.current);
+    removeDeleteChannel();
+    removeUpdateChannel();
   };
 };

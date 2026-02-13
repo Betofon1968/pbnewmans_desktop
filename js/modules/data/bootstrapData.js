@@ -53,6 +53,7 @@ export const setupBootstrapData = ({
   setSyncStatus,
   isInitialLoad,
   onConfigStatusChange,
+  onConfigReconnectReady,
 }) => {
   let isDisposed = false;
   let prefetchTimeoutId = null;
@@ -236,6 +237,7 @@ export const setupBootstrapData = ({
     setPalletTypes,
     setSavedInvoices,
     onStatusChange: onConfigStatusChange,
+    onReconnectReady: onConfigReconnectReady,
   });
 
   return () => {

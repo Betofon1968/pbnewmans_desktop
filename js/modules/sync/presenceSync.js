@@ -15,6 +15,7 @@ export const setupPresenceTracking = ({
   handleLogout,
   onStatusChange,
   onTrackSuccess,
+  onReconnectReady,
 }) => {
   if (!userName) return () => {};
 
@@ -258,6 +259,10 @@ export const setupPresenceTracking = ({
     isRestartingPresence = false;
   };
 
+  if (typeof onReconnectReady === 'function') {
+    onReconnectReady(() => restartPresenceForSetup());
+  }
+
   const setupPresence = () => {
     if (disposed) return;
     currentSetupId++;
@@ -487,6 +492,9 @@ export const setupPresenceTracking = ({
 
   return () => {
     disposed = true;
+    if (typeof onReconnectReady === 'function') {
+      onReconnectReady(null);
+    }
     clearRuntimeTimers();
     isTrackingInFlight = false;
     trackingSetupId = 0;
