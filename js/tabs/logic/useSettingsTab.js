@@ -1,4 +1,4 @@
-import { loadActivityLogEntries } from '../../modules/activity/activityLog.js?v=26.114';
+import { loadActivityLogEntries } from '../../modules/activity/activityLog.js?v=26.119';
 
 export function useSettingsTab({ React, supabase }) {
   const { useState, useCallback } = React;
@@ -33,35 +33,46 @@ export function useSettingsTab({ React, supabase }) {
   });
   const [bolSettings, setBolSettings] = useState(() => {
     const saved = localStorage.getItem('bolSettings');
-    return saved
-      ? JSON.parse(saved)
-      : {
-          companyName: 'Newmans Refrigerated Service, Inc.',
-          companyAddress: '110 Middlesex Avenue, Carteret, NJ 07008',
-          documentTitle: 'DELIVERY REPORT',
-          instructions: 'Set reefer unit to 0°F for frozen pallets',
-          contactName: 'Anand Allan',
-          contactPhone: '(646) 549-1335',
-          palletColumns: 9,
-          emptyRows: 8,
-          palletColumnWidth: 28,
-          totalColumnWidth: 22,
-          fontSizeTitle: 22,
-          fontSizePalletValue: 12,
-          fontSizePalletType: 8,
-          fontSizeTotals: 10,
-          fontSizeStoreInfo: 11,
-          showMiles: true,
-          showDriveTime: true,
-          showTotalTime: true,
-          showInspectionSection: true,
-          showNotesSection: true,
-          showSignatureSection: true,
-          mergeIndicatorStyle: 'arrow-orange',
-          // arrow-orange, arrow-black, bracket, line-thick, line-double, none
-          printBackgroundGraphics: true,
-          printHeadersFooters: false
-        };
+    const defaults = {
+      companyName: 'Newmans Refrigerated Service, Inc.',
+      companyAddress: '110 Middlesex Avenue, Carteret, NJ 07008',
+      documentTitle: 'DELIVERY REPORT',
+      instructions: 'Set reefer unit to 0°F for frozen pallets',
+      contactName: 'Anand Allan',
+      contactPhone: '(646) 549-1335',
+      palletColumns: 9,
+      emptyRows: 8,
+      palletColumnWidth: 28,
+      totalColumnWidth: 22,
+      fontSizeTitle: 22,
+      fontSizePalletValue: 12,
+      fontSizePalletType: 8,
+      fontSizeTotals: 10,
+      fontSizeStoreInfo: 11,
+      showMiles: true,
+      showDriveTime: true,
+      showTotalTime: true,
+      showInspectionSection: true,
+      showNotesSection: true,
+      showSignatureSection: true,
+      mergeIndicatorStyle: 'arrow-orange',
+      // arrow-orange, arrow-black, bracket, line-thick, line-double, none
+      printBackgroundGraphics: true,
+      printHeadersFooters: false,
+      printFitMode: 'smart',
+      minPrintScale: 0.88,
+      overflowBehavior: 'allow-two-pages'
+    };
+    if (!saved) return defaults;
+    try {
+      const parsed = JSON.parse(saved);
+      return {
+        ...defaults,
+        ...parsed
+      };
+    } catch (_) {
+      return defaults;
+    }
   });
   const [userSearch, setUserSearch] = useState('');
   const [userSort, setUserSort] = useState({ field: 'name', direction: 'asc' });

@@ -14,6 +14,7 @@ export function createRouteCrudHandlers({
   sessionId,
   supabase,
   setRoutes,
+  setRoutesByDate,
   setExpandedRoutes,
   setDateRouteCounts,
   setDeleteConfirmModal,
@@ -29,6 +30,117 @@ export function createRouteCrudHandlers({
   deleteChannelRef,
   updateChannelRef
 }) {
+  const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+  const pickDateWithCalendar = (defaultDate) =>
+    new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.background = 'rgba(0, 0, 0, 0.45)';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = '99999';
+
+      const modal = document.createElement('div');
+      modal.style.background = '#fff';
+      modal.style.borderRadius = '10px';
+      modal.style.padding = '16px';
+      modal.style.width = '320px';
+      modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.25)';
+
+      const title = document.createElement('div');
+      title.textContent = 'Copy Route To Date';
+      title.style.fontSize = '16px';
+      title.style.fontWeight = '600';
+      title.style.marginBottom = '10px';
+
+      const input = document.createElement('input');
+      input.type = 'date';
+      input.value = defaultDate || '';
+      input.style.width = '100%';
+      input.style.padding = '10px';
+      input.style.border = '1px solid #ccc';
+      input.style.borderRadius = '6px';
+      input.style.fontSize = '14px';
+      input.style.boxSizing = 'border-box';
+
+      const actions = document.createElement('div');
+      actions.style.display = 'flex';
+      actions.style.justifyContent = 'flex-end';
+      actions.style.gap = '8px';
+      actions.style.marginTop = '12px';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.style.padding = '8px 12px';
+      cancelBtn.style.border = '1px solid #ddd';
+      cancelBtn.style.borderRadius = '6px';
+      cancelBtn.style.background = '#f5f5f5';
+      cancelBtn.style.cursor = 'pointer';
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.textContent = 'Copy';
+      copyBtn.style.padding = '8px 12px';
+      copyBtn.style.border = 'none';
+      copyBtn.style.borderRadius = '6px';
+      copyBtn.style.background = '#1a7f4b';
+      copyBtn.style.color = '#fff';
+      copyBtn.style.cursor = 'pointer';
+
+      actions.appendChild(cancelBtn);
+      actions.appendChild(copyBtn);
+      modal.appendChild(title);
+      modal.appendChild(input);
+      modal.appendChild(actions);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      let settled = false;
+      const settle = (value) => {
+        if (settled) return;
+        settled = true;
+        document.removeEventListener('keydown', onKeyDown);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        resolve(value);
+      };
+
+      const onKeyDown = (e) => {
+        if (e.key === 'Escape') settle(null);
+      };
+      document.addEventListener('keydown', onKeyDown);
+
+      cancelBtn.onclick = () => settle(null);
+      overlay.onclick = (e) => {
+        if (e.target === overlay) settle(null);
+      };
+      copyBtn.onclick = () => settle((input.value || '').trim() || null);
+
+      setTimeout(() => {
+        input.focus();
+      }, 0);
+    });
+
+  const getCopyTargetDate = async ({ targetDate, promptForDate, pickWithCalendar }) => {
+    if (pickWithCalendar) {
+      return await pickDateWithCalendar(selectedDate);
+    }
+
+    if (promptForDate) {
+      const input = window.prompt(
+        'Copy route to date (YYYY-MM-DD). Leave blank to keep current date.',
+        selectedDate
+      );
+      if (input === null) return null;
+      const normalizedInput = input.trim();
+      return normalizedInput || selectedDate;
+    }
+    return targetDate || selectedDate;
+  };
+
   const addRoute = () => {
     hasPendingChanges.current = true;
     pushUndo('Add new route', null, routes);
@@ -201,32 +313,173 @@ export function createRouteCrudHandlers({
     });
   };
 
-  const copyRoute = (routeId) => {
+  const copyRoute = async (routeId, options = {}) => {
     const routeToCopy = routes.find((r) => r.id === routeId);
     if (!routeToCopy) return;
 
+    const targetDate = await getCopyTargetDate(options || {});
+    if (!targetDate) return;
+
+    if (!DATE_INPUT_PATTERN.test(targetDate)) {
+      alert('Invalid date. Use YYYY-MM-DD format.');
+      return;
+    }
+
     const newId = generateUUID();
+    const clonedRoute = JSON.parse(JSON.stringify(routeToCopy));
     const newRoute = {
-      ...JSON.parse(JSON.stringify(routeToCopy)),
+      ...clonedRoute,
       id: newId,
       confirmed: false,
       confirmedBy: null,
       confirmedAt: null,
-      stores: routeToCopy.stores.map((store, idx) => ({
+      stores: (clonedRoute.stores || []).map((store) => ({
         ...store,
-        id: Date.now() + idx
+        id: generateUUID(),
+        notes: store.notes || '',
+        internalNotes: store.internalNotes || '',
+        driverNotes: store.driverNotes || ''
       }))
     };
 
-    setRoutes((prev) => {
-      const index = prev.findIndex((r) => r.id === routeId);
-      const newRoutes = [...prev];
-      newRoutes.splice(index + 1, 0, newRoute);
-      return newRoutes.map((route, idx) => ({ ...route, route_order: idx }));
+    if (targetDate === selectedDate) {
+      setRoutes((prev) => {
+        const index = prev.findIndex((r) => r.id === routeId);
+        const newRoutes = [...prev];
+        newRoutes.splice(index + 1, 0, newRoute);
+        return newRoutes.map((route, idx) => ({ ...route, route_order: idx }));
+      });
+
+      setExpandedRoutes((prev) => [...prev, newId]);
+    } else {
+      let targetExistingCount = (routesByDate[targetDate] || []).length;
+      let nextRouteOrder = targetExistingCount;
+
+      try {
+        const { data: targetRows, error: targetRowsError } = await supabase
+          .from('logistics_routes')
+          .select('route_order')
+          .eq('route_date', targetDate)
+          .order('route_order', { ascending: true });
+
+        if (!targetRowsError && Array.isArray(targetRows)) {
+          targetExistingCount = targetRows.length;
+          const maxRouteOrder = targetRows.reduce((maxValue, row) => {
+            const currentValue = Number.isFinite(row?.route_order) ? row.route_order : -1;
+            return Math.max(maxValue, currentValue);
+          }, -1);
+          nextRouteOrder = maxRouteOrder + 1;
+        }
+      } catch (orderError) {
+        console.warn('Could not fetch target-date route order, using local fallback:', orderError);
+      }
+
+      const routeForTargetDate = {
+        ...newRoute,
+        route_order: nextRouteOrder
+      };
+
+      const payload = {
+        id: routeForTargetDate.id,
+        route_date: targetDate,
+        route_order: routeForTargetDate.route_order,
+        driver: routeForTargetDate.driver || null,
+        truck: routeForTargetDate.truck || null,
+        trailer: routeForTargetDate.trailer || null,
+        stores: routeForTargetDate.stores || [],
+        pallet_count: routeForTargetDate.palletCount || 8,
+        confirmed: false,
+        confirmed_by: null,
+        confirmed_at: null,
+        pickup_at_pb: routeForTargetDate.pickupAtPB || false,
+        updated_by: userName || 'Anonymous'
+      };
+
+      const { error: copySaveError } = await supabase
+        .from('logistics_routes')
+        .upsert([payload], { onConflict: 'id', ignoreDuplicates: false });
+
+      if (copySaveError) {
+        console.error('Error copying route to another date:', copySaveError);
+        alert('Could not copy route to selected date: ' + copySaveError.message);
+        return;
+      }
+
+      try {
+        if (updateChannelRef.current) {
+          await updateChannelRef.current.send({
+            type: 'broadcast',
+            event: 'routes-changed',
+            payload: {
+              routeDate: targetDate,
+              updatedBy: userName,
+              ts: Date.now(),
+              sessionId: sessionId.current
+            }
+          });
+        }
+      } catch (broadcastErr) {
+        console.warn('Routes-changed broadcast failed after cross-date copy (non-critical):', broadcastErr);
+      }
+
+      setRoutesByDate((prev) => {
+        const targetRoutes = prev[targetDate] || [];
+        const updatedTargetRoutes = [...targetRoutes, routeForTargetDate];
+        return {
+          ...prev,
+          [targetDate]: updatedTargetRoutes.map((route, idx) => ({ ...route, route_order: idx }))
+        };
+      });
+
+      setDateRouteCounts((prev) => {
+        const currentCount = typeof prev[targetDate] === 'number' ? prev[targetDate] : targetExistingCount;
+        return {
+          ...prev,
+          [targetDate]: currentCount + 1
+        };
+      });
+
+      logActivity(
+        'create',
+        'route',
+        String(newId),
+        routeToCopy.driver || routeToCopy.name || `Route #${routeForTargetDate.route_order + 1}`,
+        'copy',
+        selectedDate,
+        targetDate,
+        targetDate
+      );
+
+      alert(`Route copied to ${targetDate} (including notes).`);
+      console.log(`📋 Route copied to ${targetDate} with new ID:`, newId);
+      return;
+    }
+
+    const baseCount =
+      targetDate === selectedDate
+        ? routes.length
+        : (routesByDate[targetDate] || []).length;
+
+    setDateRouteCounts((prev) => {
+      const currentCount = typeof prev[targetDate] === 'number' ? prev[targetDate] : baseCount;
+      return {
+        ...prev,
+        [targetDate]: currentCount + 1
+      };
     });
 
-    setExpandedRoutes((prev) => [...prev, newId]);
-    console.log('📋 Route copied with new ID:', newId);
+    logActivity(
+      'create',
+      'route',
+      String(newId),
+      routeToCopy.driver || routeToCopy.name || `Route #${newRoute.route_order + 1}`,
+      'copy',
+      selectedDate,
+      targetDate,
+      targetDate
+    );
+
+    console.log(`📋 Route copied to ${targetDate} with new ID:`, newId);
   };
 
   return {

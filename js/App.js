@@ -1,48 +1,48 @@
-import OverviewTab from './tabs/OverviewTab.js?v=26.114';
-import DriversTab from './tabs/DriversTab.js?v=26.114';
-import StoresTab from './tabs/StoresTab.js?v=26.114';
-import TrucksTab from './tabs/TrucksTab.js?v=26.114';
-import AiLogisticsTab from './tabs/AiLogisticsTab.js?v=26.114';
-import AccountsTab from './tabs/AccountsTab.js?v=26.114';
-import ReportsTab from './tabs/ReportsTab.js?v=26.114';
-import SettingsTab from './tabs/SettingsTab.js?v=26.114';
-import {generateBOLDocument} from './modules/bol.js?v=26.114';
-import StatCard from './components/StatCard.js?v=26.114';
-import RouteCard from './components/RouteCard.js?v=26.114';
-import StoreSearchModal from './components/StoreSearchModal.js?v=26.114';
-import AppModals from './components/AppModals.js?v=26.114';
-import AppModalsSecondary from './components/AppModalsSecondary.js?v=26.114';
-import AppModalsTertiary from './components/AppModalsTertiary.js?v=26.114';
-import {initialRoutes,MAX_PALLETS,MIN_PALLETS,defaultDriverColors,initialStoresDirectory,initialDriversDirectory,initialTrucksDirectory,truckZones,truckMakes,truckStatuses,trailerMakes,trailerTypes,states,trailerSizes,licenseTypes,driverStatuses,rolePermissions,initialPalletTypes} from './modules/constants.js?v=26.114';
-import AuthScreen from './modules/auth/AuthScreen.js?v=26.114';
-import PasswordResetScreen from './modules/auth/PasswordResetScreen.js?v=26.114';
-import {initializeAuthSession} from './modules/auth/session.js?v=26.114';
-import {buildActiveUsersFromState as buildActiveUsersFromPresence} from './modules/sync/activeUsers.js?v=26.114';
-import {mapRouteRecordToClientRoute} from './modules/sync/routeMapper.js?v=26.114';
-import {setupRouteBroadcastSync} from './modules/sync/broadcastSync.js?v=26.114';
-import {setupDateRoutesSync} from './modules/sync/dateRoutesSync.js?v=26.114';
-import {setupPresenceTracking,syncPresenceDate} from './modules/sync/presenceSync.js?v=26.114';
-import {setupOnlineOfflineSync} from './modules/sync/networkSync.js?v=26.114';
-import {saveLocalBackupToStorage,restoreFromLocalBackup,exportBackupJson,saveToSupabasePipeline,retryQueuedSavesOnReconnect,setupDebouncedSave} from './modules/sync/persistenceSync.js?v=26.114';
-import {createRouteCrudHandlers} from './modules/routes/routeCrud.js?v=26.114';
-import {createRouteStoreOpsHandlers} from './modules/routes/routeStoreOps.js?v=26.114';
-import {createRouteMutationsHandlers} from './modules/routes/routeMutations.js?v=26.114';
-import {createCopyRoutesFromDateHandler} from './modules/routes/copyRoutes.js?v=26.114';
-import {createPalletOpsHandlers} from './modules/routes/palletOps.js?v=26.114';
-import {buildDriverColors,calculateTotalsFromRoutes,getDriverStatsFromRoutes,calculateRouteTotalFromStores} from './modules/routes/metrics.js?v=26.114';
-import {createStoreDirectoryHandlers} from './modules/stores/storeDirectory.js?v=26.114';
-import {createDriverDirectoryHandlers} from './modules/drivers/driverDirectory.js?v=26.114';
-import {sendDriverExpirationAlertEmail} from './modules/drivers/driverAlerts.js?v=26.114';
-import {createEquipmentDirectoryHandlers} from './modules/trucks/equipmentDirectory.js?v=26.114';
-import {setupBootstrapData} from './modules/data/bootstrapData.js?v=26.114';
-import {logActivityEntry} from './modules/activity/activityLog.js?v=26.114';
-import {getTodayInTimezoneValue,getTomorrowInTimezoneValue,isFutureDateInTimezone} from './modules/time/dateUtils.js?v=26.114';
-import {findCurrentUserData,buildEffectivePermissions,canAccessTabByPermissions,canEditTabByPermissions,canPerformActionByPermissions} from './modules/security/permissions.js?v=26.114';
-import {getWeekDatesForDate,formatDateDisplayValue,formatDayNameShort,formatDayNumberValue,formatPhoneNumberValue,formatCurrencyValue,escapeHtmlValue,isDateTodayInTimezone,getNavigatedWeekDate} from './modules/utils/formatters.js?v=26.114';
-import {parseCsvText} from './modules/utils/csv.js?v=26.114';
-import {createStoresTabProps,createDriversTabProps,createTrucksTabProps,createOverviewTabProps,createReportsTabProps,createSettingsTabProps,createAiLogisticsTabProps,createAccountsTabProps,useDriversTab,useTrucksTab,useReportsTab,useSettingsTab,useAppModals,useAiLogisticsTab,useAccountsInvoices} from './tabs/logic/index.js?v=26.114';
-import {getSyncStatusDisplayValue} from './modules/sync/syncStatus.js?v=26.114';
-import {useSyncDebug} from './modules/sync/useSyncDebug.js?v=26.114';
+import OverviewTab from './tabs/OverviewTab.js?v=26.119';
+import DriversTab from './tabs/DriversTab.js?v=26.119';
+import StoresTab from './tabs/StoresTab.js?v=26.119';
+import TrucksTab from './tabs/TrucksTab.js?v=26.119';
+import AiLogisticsTab from './tabs/AiLogisticsTab.js?v=26.119';
+import AccountsTab from './tabs/AccountsTab.js?v=26.119';
+import ReportsTab from './tabs/ReportsTab.js?v=26.119';
+import SettingsTab from './tabs/SettingsTab.js?v=26.119';
+import {generateBOLDocument} from './modules/bol.js?v=26.119';
+import StatCard from './components/StatCard.js?v=26.119';
+import RouteCard from './components/RouteCard.js?v=26.119';
+import StoreSearchModal from './components/StoreSearchModal.js?v=26.119';
+import AppModals from './components/AppModals.js?v=26.119';
+import AppModalsSecondary from './components/AppModalsSecondary.js?v=26.119';
+import AppModalsTertiary from './components/AppModalsTertiary.js?v=26.119';
+import {initialRoutes,MAX_PALLETS,MIN_PALLETS,defaultDriverColors,initialStoresDirectory,initialDriversDirectory,initialTrucksDirectory,truckZones,truckMakes,truckStatuses,trailerMakes,trailerTypes,states,trailerSizes,licenseTypes,driverStatuses,rolePermissions,initialPalletTypes} from './modules/constants.js?v=26.119';
+import AuthScreen from './modules/auth/AuthScreen.js?v=26.119';
+import PasswordResetScreen from './modules/auth/PasswordResetScreen.js?v=26.119';
+import {initializeAuthSession} from './modules/auth/session.js?v=26.119';
+import {buildActiveUsersFromState as buildActiveUsersFromPresence} from './modules/sync/activeUsers.js?v=26.119';
+import {mapRouteRecordToClientRoute} from './modules/sync/routeMapper.js?v=26.119';
+import {setupRouteBroadcastSync} from './modules/sync/broadcastSync.js?v=26.119';
+import {setupDateRoutesSync} from './modules/sync/dateRoutesSync.js?v=26.119';
+import {setupPresenceTracking,syncPresenceDate} from './modules/sync/presenceSync.js?v=26.119';
+import {setupOnlineOfflineSync} from './modules/sync/networkSync.js?v=26.119';
+import {saveLocalBackupToStorage,restoreFromLocalBackup,exportBackupJson,saveToSupabasePipeline,retryQueuedSavesOnReconnect,setupDebouncedSave} from './modules/sync/persistenceSync.js?v=26.119';
+import {createRouteCrudHandlers} from './modules/routes/routeCrud.js?v=26.119';
+import {createRouteStoreOpsHandlers} from './modules/routes/routeStoreOps.js?v=26.119';
+import {createRouteMutationsHandlers} from './modules/routes/routeMutations.js?v=26.119';
+import {createCopyRoutesFromDateHandler} from './modules/routes/copyRoutes.js?v=26.119';
+import {createPalletOpsHandlers} from './modules/routes/palletOps.js?v=26.119';
+import {buildDriverColors,calculateTotalsFromRoutes,getDriverStatsFromRoutes,calculateRouteTotalFromStores} from './modules/routes/metrics.js?v=26.119';
+import {createStoreDirectoryHandlers} from './modules/stores/storeDirectory.js?v=26.119';
+import {createDriverDirectoryHandlers} from './modules/drivers/driverDirectory.js?v=26.119';
+import {sendDriverExpirationAlertEmail} from './modules/drivers/driverAlerts.js?v=26.119';
+import {createEquipmentDirectoryHandlers} from './modules/trucks/equipmentDirectory.js?v=26.119';
+import {setupBootstrapData} from './modules/data/bootstrapData.js?v=26.119';
+import {logActivityEntry} from './modules/activity/activityLog.js?v=26.119';
+import {getTodayInTimezoneValue,getTomorrowInTimezoneValue,isFutureDateInTimezone} from './modules/time/dateUtils.js?v=26.119';
+import {findCurrentUserData,buildEffectivePermissions,canAccessTabByPermissions,canEditTabByPermissions,canPerformActionByPermissions} from './modules/security/permissions.js?v=26.119';
+import {getWeekDatesForDate,formatDateDisplayValue,formatDayNameShort,formatDayNumberValue,formatPhoneNumberValue,formatCurrencyValue,escapeHtmlValue,isDateTodayInTimezone,getNavigatedWeekDate} from './modules/utils/formatters.js?v=26.119';
+import {parseCsvText} from './modules/utils/csv.js?v=26.119';
+import {createStoresTabProps,createDriversTabProps,createTrucksTabProps,createOverviewTabProps,createReportsTabProps,createSettingsTabProps,createAiLogisticsTabProps,createAccountsTabProps,useDriversTab,useTrucksTab,useReportsTab,useSettingsTab,useAppModals,useAiLogisticsTab,useAccountsInvoices} from './tabs/logic/index.js?v=26.119';
+import {getSyncStatusDisplayValue} from './modules/sync/syncStatus.js?v=26.119';
+import {useSyncDebug} from './modules/sync/useSyncDebug.js?v=26.119';
 
 // ╔╗
 // ║  SECTION 1: CONFIGURATION & SETUP                                             ║
@@ -58,7 +58,7 @@ if(message.includes('A listener indicated an asynchronous response by returning 
 supabase.auth.signOut().catch(()=>{});}};window.addEventListener('unhandledrejection',window.__authUnhandledRejectionHandler);// ─────────────────────────────────────────────────────────────────────────────
 // APP VERSION - Update this when deploying new versions
 // ─────────────────────────────────────────────────────────────────────────────
-const APP_VERSION='26.115';const APP_BUILD_DATE='2026-01-23';const IS_BETA_BUILD=true;window.APP_VERSION=APP_VERSION;window.APP_BUILD_DATE=APP_BUILD_DATE;window.APP_IS_BETA=IS_BETA_BUILD;const deferredCacheWrite=(key,data)=>{const doWrite=()=>{try{localStorage.setItem(key,typeof data==='string'?data:JSON.stringify(data));}catch(e){console.warn('Cache write error:',e);}};if('requestIdleCallback' in window){requestIdleCallback(doWrite,{timeout:2000});}else{setTimeout(doWrite,0);}};// ─────────────────────────────────────────────────────────────────────────────
+const APP_VERSION='26.119';const APP_BUILD_DATE='2026-01-23';const IS_BETA_BUILD=true;window.APP_VERSION=APP_VERSION;window.APP_BUILD_DATE=APP_BUILD_DATE;window.APP_IS_BETA=IS_BETA_BUILD;const deferredCacheWrite=(key,data)=>{const doWrite=()=>{try{localStorage.setItem(key,typeof data==='string'?data:JSON.stringify(data));}catch(e){console.warn('Cache write error:',e);}};if('requestIdleCallback' in window){requestIdleCallback(doWrite,{timeout:2000});}else{setTimeout(doWrite,0);}};// ─────────────────────────────────────────────────────────────────────────────
 // SENTRY ERROR MONITORING - Added v1.997
 // ─────────────────────────────────────────────────────────────────────────────
 // IMPORTANT: Sentry DSN configured for Elite Cold Storage
@@ -203,7 +203,8 @@ useEffect(()=>setupOnlineOfflineSync({supabase,offlineTimestamp,setIsOnline,setS
 useEffect(()=>{const handleBeforeUnload=e=>{if(hasPendingChanges.current){const message='You have unsaved changes. Are you sure you want to leave?';e.preventDefault();e.returnValue=message;return message;}};window.addEventListener('beforeunload',handleBeforeUnload);return()=>{window.removeEventListener('beforeunload',handleBeforeUnload);};},[]);// Inactivity timeout tracking - optimized to not re-bind listeners
 useEffect(()=>{showInactivityWarningRef.current=showInactivityWarning;},[showInactivityWarning]);useEffect(()=>{if(!userName)return;// Update last activity on user interaction (uses ref, no re-render)
 const updateActivity=()=>{lastActivityRef.current=Date.now();if(showInactivityWarningRef.current){setShowInactivityWarning(false);}};// Track user activity - listeners bound ONCE
-const events=['mousedown','keydown','scroll'];// mousemove removed - fires too frequentlyevents.forEach(event=>{window.addEventListener(event,updateActivity,{passive:true});});// Check for inactivity every minute
+const events=['mousedown','keydown','scroll'];// mousemove removed - fires too frequently
+events.forEach(event=>{window.addEventListener(event,updateActivity,{passive:true});});// Check for inactivity every minute
 const checkInactivity=setInterval(()=>{const now=Date.now();const timeSinceActivity=now-lastActivityRef.current;if(timeSinceActivity>=INACTIVITY_TIMEOUT){// Auto logout after 1 hour
 console.log('Inactivity timeout - logging out');handleLogout();}else if(timeSinceActivity>=INACTIVITY_WARNING&&!showInactivityWarningRef.current){// Show warning at 55 minutes
 setShowInactivityWarning(true);}},60000);// Check every minute
@@ -239,7 +240,7 @@ const palletEditStartState=useRef(null);const logPalletChange=(routeId,storeId,p
 if(palletEditStartState.current){pushUndo(`Pallet ${palletIndex+1} on ${storeName}`,routeId,palletEditStartState.current);palletEditStartState.current=null;}logActivity('update','pallet',String(storeId),`${storeName} (${routeName})`,`Pallet ${palletIndex+1}`,oldValue||0,newValue||0,selectedDate);};// Handle pallet field focus - set protection flags to prevent real-time overwrites
 const handlePalletFocus=()=>{hasPendingChanges.current=true;lastInteractionTime.current=Date.now();// Capture current routes state for undo
 palletEditStartState.current=JSON.parse(JSON.stringify(routes));};// Log field change on blur (when user leaves field)
-const logFieldChange=(entityType,entityId,entityName,field,oldValue,newValue,routeDate=null)=>{if(oldValue===newValue)return;logActivity('update',entityType,String(entityId),entityName,field,oldValue,newValue,routeDate);};const{updatePallet,updateStore,updateRoute,toggleRouteConfirmation}=createRouteMutationsHandlers({routes,selectedDate,userName,currentUserRole,setRoutes,pushUndo,logActivity,hasPendingChanges,lastInteractionTime,editedStores,lastEditTime,markFieldDirty});const{addStore,removeStore,moveRoute,moveStore}=createRouteStoreOpsHandlers({routes,selectedDate,setRoutes,setDeleteConfirmModal,pushUndo,logActivity,hasPendingChanges,markFieldDirty});const{addRoute,removeRoute,copyRoute}=createRouteCrudHandlers({routes,routesByDate,selectedDate,userName,sessionId,supabase,setRoutes,setExpandedRoutes,setDateRouteCounts,setDeleteConfirmModal,pushUndo,logActivity,enterServerUpdate,exitServerUpdate,lastSavedData,hasPendingChanges,editedStores,lastEditTime,clearDirtyFields,deleteChannelRef,updateChannelRef});const{sortStorePalletsByType,addPalletColumn,removePalletColumn}=createPalletOpsHandlers({setRoutes,MIN_PALLETS,MAX_PALLETS});// ─────────────────────────────────────────────────────────────────────────
+const logFieldChange=(entityType,entityId,entityName,field,oldValue,newValue,routeDate=null)=>{if(oldValue===newValue)return;logActivity('update',entityType,String(entityId),entityName,field,oldValue,newValue,routeDate);};const{updatePallet,updateStore,updateRoute,toggleRouteConfirmation}=createRouteMutationsHandlers({routes,selectedDate,userName,currentUserRole,setRoutes,pushUndo,logActivity,hasPendingChanges,lastInteractionTime,editedStores,lastEditTime,markFieldDirty});const{addStore,removeStore,moveRoute,moveStore}=createRouteStoreOpsHandlers({routes,selectedDate,setRoutes,setDeleteConfirmModal,pushUndo,logActivity,hasPendingChanges,markFieldDirty});const{addRoute,removeRoute,copyRoute}=createRouteCrudHandlers({routes,routesByDate,selectedDate,userName,sessionId,supabase,setRoutes,setRoutesByDate,setExpandedRoutes,setDateRouteCounts,setDeleteConfirmModal,pushUndo,logActivity,enterServerUpdate,exitServerUpdate,lastSavedData,hasPendingChanges,editedStores,lastEditTime,clearDirtyFields,deleteChannelRef,updateChannelRef});const{sortStorePalletsByType,addPalletColumn,removePalletColumn}=createPalletOpsHandlers({setRoutes,MIN_PALLETS,MAX_PALLETS});// ─────────────────────────────────────────────────────────────────────────
 // ╔╗
 // ║  SECTION 7: BOL & PRINT GENERATION                                          ║
 // ║  Generate BOL (Bill of Lading / Delivery Report) for printing               ║
