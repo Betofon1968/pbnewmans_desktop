@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js?v=26.119';
+import {syncLog} from './syncDebug.js?v=26.120';
 export const setupOnlineOfflineSync = ({
   supabase,
   offlineTimestamp,

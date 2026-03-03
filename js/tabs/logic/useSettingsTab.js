@@ -1,4 +1,4 @@
-import { loadActivityLogEntries } from '../../modules/activity/activityLog.js?v=26.119';
+import { loadActivityLogEntries } from '../../modules/activity/activityLog.js?v=26.120';
 
 export function useSettingsTab({ React, supabase }) {
   const { useState, useCallback } = React;

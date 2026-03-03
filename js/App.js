@@ -1,48 +1,48 @@
-import OverviewTab from './tabs/OverviewTab.js?v=26.119';
-import DriversTab from './tabs/DriversTab.js?v=26.119';
-import StoresTab from './tabs/StoresTab.js?v=26.119';
-import TrucksTab from './tabs/TrucksTab.js?v=26.119';
-import AiLogisticsTab from './tabs/AiLogisticsTab.js?v=26.119';
-import AccountsTab from './tabs/AccountsTab.js?v=26.119';
-import ReportsTab from './tabs/ReportsTab.js?v=26.119';
-import SettingsTab from './tabs/SettingsTab.js?v=26.119';
-import {generateBOLDocument} from './modules/bol.js?v=26.119';
-import StatCard from './components/StatCard.js?v=26.119';
-import RouteCard from './components/RouteCard.js?v=26.119';
-import StoreSearchModal from './components/StoreSearchModal.js?v=26.119';
-import AppModals from './components/AppModals.js?v=26.119';
-import AppModalsSecondary from './components/AppModalsSecondary.js?v=26.119';
-import AppModalsTertiary from './components/AppModalsTertiary.js?v=26.119';
-import {initialRoutes,MAX_PALLETS,MIN_PALLETS,defaultDriverColors,initialStoresDirectory,initialDriversDirectory,initialTrucksDirectory,truckZones,truckMakes,truckStatuses,trailerMakes,trailerTypes,states,trailerSizes,licenseTypes,driverStatuses,rolePermissions,initialPalletTypes} from './modules/constants.js?v=26.119';
-import AuthScreen from './modules/auth/AuthScreen.js?v=26.119';
-import PasswordResetScreen from './modules/auth/PasswordResetScreen.js?v=26.119';
-import {initializeAuthSession} from './modules/auth/session.js?v=26.119';
-import {buildActiveUsersFromState as buildActiveUsersFromPresence} from './modules/sync/activeUsers.js?v=26.119';
-import {mapRouteRecordToClientRoute} from './modules/sync/routeMapper.js?v=26.119';
-import {setupRouteBroadcastSync} from './modules/sync/broadcastSync.js?v=26.119';
-import {setupDateRoutesSync} from './modules/sync/dateRoutesSync.js?v=26.119';
-import {setupPresenceTracking,syncPresenceDate} from './modules/sync/presenceSync.js?v=26.119';
-import {setupOnlineOfflineSync} from './modules/sync/networkSync.js?v=26.119';
-import {saveLocalBackupToStorage,restoreFromLocalBackup,exportBackupJson,saveToSupabasePipeline,retryQueuedSavesOnReconnect,setupDebouncedSave} from './modules/sync/persistenceSync.js?v=26.119';
-import {createRouteCrudHandlers} from './modules/routes/routeCrud.js?v=26.119';
-import {createRouteStoreOpsHandlers} from './modules/routes/routeStoreOps.js?v=26.119';
-import {createRouteMutationsHandlers} from './modules/routes/routeMutations.js?v=26.119';
-import {createCopyRoutesFromDateHandler} from './modules/routes/copyRoutes.js?v=26.119';
-import {createPalletOpsHandlers} from './modules/routes/palletOps.js?v=26.119';
-import {buildDriverColors,calculateTotalsFromRoutes,getDriverStatsFromRoutes,calculateRouteTotalFromStores} from './modules/routes/metrics.js?v=26.119';
-import {createStoreDirectoryHandlers} from './modules/stores/storeDirectory.js?v=26.119';
-import {createDriverDirectoryHandlers} from './modules/drivers/driverDirectory.js?v=26.119';
-import {sendDriverExpirationAlertEmail} from './modules/drivers/driverAlerts.js?v=26.119';
-import {createEquipmentDirectoryHandlers} from './modules/trucks/equipmentDirectory.js?v=26.119';
-import {setupBootstrapData} from './modules/data/bootstrapData.js?v=26.119';
-import {logActivityEntry} from './modules/activity/activityLog.js?v=26.119';
-import {getTodayInTimezoneValue,getTomorrowInTimezoneValue,isFutureDateInTimezone} from './modules/time/dateUtils.js?v=26.119';
-import {findCurrentUserData,buildEffectivePermissions,canAccessTabByPermissions,canEditTabByPermissions,canPerformActionByPermissions} from './modules/security/permissions.js?v=26.119';
-import {getWeekDatesForDate,formatDateDisplayValue,formatDayNameShort,formatDayNumberValue,formatPhoneNumberValue,formatCurrencyValue,escapeHtmlValue,isDateTodayInTimezone,getNavigatedWeekDate} from './modules/utils/formatters.js?v=26.119';
-import {parseCsvText} from './modules/utils/csv.js?v=26.119';
-import {createStoresTabProps,createDriversTabProps,createTrucksTabProps,createOverviewTabProps,createReportsTabProps,createSettingsTabProps,createAiLogisticsTabProps,createAccountsTabProps,useDriversTab,useTrucksTab,useReportsTab,useSettingsTab,useAppModals,useAiLogisticsTab,useAccountsInvoices} from './tabs/logic/index.js?v=26.119';
-import {getSyncStatusDisplayValue} from './modules/sync/syncStatus.js?v=26.119';
-import {useSyncDebug} from './modules/sync/useSyncDebug.js?v=26.119';
+import OverviewTab from './tabs/OverviewTab.js?v=26.120';
+import DriversTab from './tabs/DriversTab.js?v=26.120';
+import StoresTab from './tabs/StoresTab.js?v=26.120';
+import TrucksTab from './tabs/TrucksTab.js?v=26.120';
+import AiLogisticsTab from './tabs/AiLogisticsTab.js?v=26.120';
+import AccountsTab from './tabs/AccountsTab.js?v=26.120';
+import ReportsTab from './tabs/ReportsTab.js?v=26.120';
+import SettingsTab from './tabs/SettingsTab.js?v=26.120';
+import {generateBOLDocument} from './modules/bol.js?v=26.120';
+import StatCard from './components/StatCard.js?v=26.120';
+import RouteCard from './components/RouteCard.js?v=26.120';
+import StoreSearchModal from './components/StoreSearchModal.js?v=26.120';
+import AppModals from './components/AppModals.js?v=26.120';
+import AppModalsSecondary from './components/AppModalsSecondary.js?v=26.120';
+import AppModalsTertiary from './components/AppModalsTertiary.js?v=26.120';
+import {initialRoutes,MAX_PALLETS,MIN_PALLETS,defaultDriverColors,initialStoresDirectory,initialDriversDirectory,initialTrucksDirectory,truckZones,truckMakes,truckStatuses,trailerMakes,trailerTypes,states,trailerSizes,licenseTypes,driverStatuses,rolePermissions,initialPalletTypes} from './modules/constants.js?v=26.120';
+import AuthScreen from './modules/auth/AuthScreen.js?v=26.120';
+import PasswordResetScreen from './modules/auth/PasswordResetScreen.js?v=26.120';
+import {initializeAuthSession} from './modules/auth/session.js?v=26.120';
+import {buildActiveUsersFromState as buildActiveUsersFromPresence} from './modules/sync/activeUsers.js?v=26.120';
+import {mapRouteRecordToClientRoute} from './modules/sync/routeMapper.js?v=26.120';
+import {setupRouteBroadcastSync} from './modules/sync/broadcastSync.js?v=26.120';
+import {setupDateRoutesSync} from './modules/sync/dateRoutesSync.js?v=26.120';
+import {setupPresenceTracking,syncPresenceDate} from './modules/sync/presenceSync.js?v=26.120';
+import {setupOnlineOfflineSync} from './modules/sync/networkSync.js?v=26.120';
+import {saveLocalBackupToStorage,restoreFromLocalBackup,exportBackupJson,saveToSupabasePipeline,retryQueuedSavesOnReconnect,setupDebouncedSave} from './modules/sync/persistenceSync.js?v=26.120';
+import {createRouteCrudHandlers} from './modules/routes/routeCrud.js?v=26.120';
+import {createRouteStoreOpsHandlers} from './modules/routes/routeStoreOps.js?v=26.120';
+import {createRouteMutationsHandlers} from './modules/routes/routeMutations.js?v=26.120';
+import {createCopyRoutesFromDateHandler} from './modules/routes/copyRoutes.js?v=26.120';
+import {createPalletOpsHandlers} from './modules/routes/palletOps.js?v=26.120';
+import {buildDriverColors,calculateTotalsFromRoutes,getDriverStatsFromRoutes,calculateRouteTotalFromStores} from './modules/routes/metrics.js?v=26.120';
+import {createStoreDirectoryHandlers} from './modules/stores/storeDirectory.js?v=26.120';
+import {createDriverDirectoryHandlers} from './modules/drivers/driverDirectory.js?v=26.120';
+import {sendDriverExpirationAlertEmail} from './modules/drivers/driverAlerts.js?v=26.120';
+import {createEquipmentDirectoryHandlers} from './modules/trucks/equipmentDirectory.js?v=26.120';
+import {setupBootstrapData} from './modules/data/bootstrapData.js?v=26.120';
+import {logActivityEntry} from './modules/activity/activityLog.js?v=26.120';
+import {getTodayInTimezoneValue,getTomorrowInTimezoneValue,isFutureDateInTimezone} from './modules/time/dateUtils.js?v=26.120';
+import {findCurrentUserData,buildEffectivePermissions,canAccessTabByPermissions,canEditTabByPermissions,canPerformActionByPermissions} from './modules/security/permissions.js?v=26.120';
+import {getWeekDatesForDate,formatDateDisplayValue,formatDayNameShort,formatDayNumberValue,formatPhoneNumberValue,formatCurrencyValue,escapeHtmlValue,isDateTodayInTimezone,getNavigatedWeekDate} from './modules/utils/formatters.js?v=26.120';
+import {parseCsvText} from './modules/utils/csv.js?v=26.120';
+import {createStoresTabProps,createDriversTabProps,createTrucksTabProps,createOverviewTabProps,createReportsTabProps,createSettingsTabProps,createAiLogisticsTabProps,createAccountsTabProps,useDriversTab,useTrucksTab,useReportsTab,useSettingsTab,useAppModals,useAiLogisticsTab,useAccountsInvoices} from './tabs/logic/index.js?v=26.120';
+import {getSyncStatusDisplayValue} from './modules/sync/syncStatus.js?v=26.120';
+import {useSyncDebug} from './modules/sync/useSyncDebug.js?v=26.120';
 
 // ╔╗
 // ║  SECTION 1: CONFIGURATION & SETUP                                             ║
@@ -58,7 +58,7 @@ if(message.includes('A listener indicated an asynchronous response by returning 
 supabase.auth.signOut().catch(()=>{});}};window.addEventListener('unhandledrejection',window.__authUnhandledRejectionHandler);// ─────────────────────────────────────────────────────────────────────────────
 // APP VERSION - Update this when deploying new versions
 // ─────────────────────────────────────────────────────────────────────────────
-const APP_VERSION='26.119';const APP_BUILD_DATE='2026-01-23';const IS_BETA_BUILD=true;window.APP_VERSION=APP_VERSION;window.APP_BUILD_DATE=APP_BUILD_DATE;window.APP_IS_BETA=IS_BETA_BUILD;const deferredCacheWrite=(key,data)=>{const doWrite=()=>{try{localStorage.setItem(key,typeof data==='string'?data:JSON.stringify(data));}catch(e){console.warn('Cache write error:',e);}};if('requestIdleCallback' in window){requestIdleCallback(doWrite,{timeout:2000});}else{setTimeout(doWrite,0);}};// ─────────────────────────────────────────────────────────────────────────────
+const APP_VERSION='26.120';const APP_BUILD_DATE='2026-01-23';const IS_BETA_BUILD=true;window.APP_VERSION=APP_VERSION;window.APP_BUILD_DATE=APP_BUILD_DATE;window.APP_IS_BETA=IS_BETA_BUILD;const deferredCacheWrite=(key,data)=>{const doWrite=()=>{try{localStorage.setItem(key,typeof data==='string'?data:JSON.stringify(data));}catch(e){console.warn('Cache write error:',e);}};if('requestIdleCallback' in window){requestIdleCallback(doWrite,{timeout:2000});}else{setTimeout(doWrite,0);}};// ─────────────────────────────────────────────────────────────────────────────
 // SENTRY ERROR MONITORING - Added v1.997
 // ─────────────────────────────────────────────────────────────────────────────
 // IMPORTANT: Sentry DSN configured for Elite Cold Storage
@@ -220,7 +220,7 @@ const routesSubscriptionRef=useRef(null);const routesSetupIdRef=useRef(0);// Tok
 useEffect(()=>setupDateRoutesSync({selectedDate,supabase,routesSubscriptionRef,routesSetupIdRef,enterServerUpdate,exitServerUpdate,setRoutesByDate,dirtyFieldsByRoute,dirtyFieldUpdatedAtByRouteRef,dirtyFieldAckAtByRouteRef,mergeServerRouteIntoLocal,mapRouteRecordToClientRoute,lastAppliedRealtimeAtByDateRef,lastRowRealtimeAtByDateRef,localUserNameRef:userNameRef,recentLocalSaveByDateRouteRef,onStatusChange:(status,date)=>{registerChannelStatus('routes',status);pushSyncEvent('Routes subscription '+status+' for '+date,{type:'routes',status:status,routeDate:date});},onReconnectReady:reconnect=>{registerChannelReconnect('routes',reconnect);},localEchoSuppressMs:6000,fullReloadSuppressionMs:600}),[selectedDate,pushSyncEvent,registerChannelStatus,registerChannelReconnect]);// Log activity to Supabase
 const logActivity=async(actionType,entityType,entityId,entityName,fieldChanged,oldValue,newValue,routeDate=null,details=null)=>{await logActivityEntry({supabase,user,userName,actionType,entityType,entityId,entityName,fieldChanged,oldValue,newValue,routeDate,details});};
 // LOCAL BACKUP: Save to localStorage before every cloud save
-const saveLocalBackup=useCallback(data=>{saveLocalBackupToStorage(data);},[]);const restoreFromBackup=useCallback((backupIndex=0)=>restoreFromLocalBackup({backupIndex,enterServerUpdate,exitServerUpdate,setRoutesByDate,setStoresDirectory,setDriversDirectory,setTrucksDirectory,setTrailersDirectory,setTractorsDirectory,setPalletTypes,setSavedInvoices,hasPendingChanges}),[]);const exportData=useCallback(()=>{exportBackupJson({userName,APP_VERSION,routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices});},[userName,routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices]);const saveToSupabase=useCallback(async(newRoutesByDate,newStoresDirectory,newDriversDirectory,newTrucksDirectory,newTrailersDirectory,newTractorsDirectory,newPalletTypes,newSavedInvoices)=>{return await saveToSupabasePipeline({supabase,userName,IS_BETA_BUILD,APP_VERSION,newRoutesByDate,newStoresDirectory,newDriversDirectory,newTrucksDirectory,newTrailersDirectory,newTractorsDirectory,newPalletTypes,newSavedInvoices,selectedDateRef,isInitialLoad,isFromServer,lastSavedData,lastSavedConfig,setSyncStatus,saveLocalBackup,setRoutesByDate,setDateRouteCounts,updateChannelRef,sessionId,dirtyFieldsByRoute,dirtyFieldUpdatedAtByRouteRef,recentLocalSaveByDateRouteRef,clearDirtyFields,acknowledgeDirtyFieldsSaved,hasPendingChanges,editedStores,lastEditTime,setLastUpdated,setLastSuccessfulSave});},[userName,saveLocalBackup,acknowledgeDirtyFieldsSaved]);useEffect(()=>{if(!isOnline){wasOnlineRef.current=false;return;}if(!wasOnlineRef.current){shouldReplayQueuedSaveRef.current=true;}wasOnlineRef.current=true;if(!shouldReplayQueuedSaveRef.current||needsReload||reconnectReplayInFlightRef.current)return;reconnectReplayInFlightRef.current=true;shouldReplayQueuedSaveRef.current=false;(async()=>{try{await retryQueuedSavesOnReconnect({saveToSupabase,setSyncStatus,supabase,userName,updateChannelRef,sessionId});}finally{reconnectReplayInFlightRef.current=false;}})();},[isOnline,needsReload,saveToSupabase]);useEffect(()=>setupDebouncedSave({isInitialLoad,isFromServer,hasPendingChanges,saveTimeoutRef,pendingSaveDataRef,routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices,saveToSupabase}),[routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices,saveToSupabase]);useEffect(()=>{if(!hasPendingChanges.current)return;if(isInitialLoad.current||isFromServer.current)return;if(saveTimeoutRef.current||pendingSaveDataRef.current)return;if(Object.keys(dirtyFieldsByRoute.current).length>0)return;hasPendingChanges.current=false;editedStores.current.clear();lastEditTime.current={};console.log('🧹 Cleared stale pending edit flag (no pending save)');},[routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices]);// Check for username
+const saveLocalBackup=useCallback(data=>{saveLocalBackupToStorage(data);},[]);const restoreFromBackup=useCallback((backupIndex=0)=>restoreFromLocalBackup({backupIndex,enterServerUpdate,exitServerUpdate,setRoutesByDate,setStoresDirectory,setDriversDirectory,setTrucksDirectory,setTrailersDirectory,setTractorsDirectory,setPalletTypes,setSavedInvoices,hasPendingChanges}),[]);const exportData=useCallback(()=>{exportBackupJson({userName,APP_VERSION,routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices});},[userName,routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices]);const saveToSupabase=useCallback(async(newRoutesByDate,newStoresDirectory,newDriversDirectory,newTrucksDirectory,newTrailersDirectory,newTractorsDirectory,newPalletTypes,newSavedInvoices)=>{return await saveToSupabasePipeline({supabase,userName,IS_BETA_BUILD,APP_VERSION,newRoutesByDate,newStoresDirectory,newDriversDirectory,newTrucksDirectory,newTrailersDirectory,newTractorsDirectory,newPalletTypes,newSavedInvoices,selectedDateRef,isInitialLoad,isFromServer,lastSavedData,lastSavedConfig,setSyncStatus,saveLocalBackup,setRoutesByDate,setDateRouteCounts,updateChannelRef,sessionId,dirtyFieldsByRoute,dirtyFieldUpdatedAtByRouteRef,recentLocalSaveByDateRouteRef,clearDirtyFields,acknowledgeDirtyFieldsSaved,hasPendingChanges,editedStores,lastEditTime,setLastUpdated,setLastSuccessfulSave});},[userName,saveLocalBackup,acknowledgeDirtyFieldsSaved]);useEffect(()=>{if(!isOnline){wasOnlineRef.current=false;return;}if(!wasOnlineRef.current){shouldReplayQueuedSaveRef.current=true;}wasOnlineRef.current=true;if(!shouldReplayQueuedSaveRef.current||needsReload||reconnectReplayInFlightRef.current)return;reconnectReplayInFlightRef.current=true;shouldReplayQueuedSaveRef.current=false;(async()=>{try{await retryQueuedSavesOnReconnect({saveToSupabase,setSyncStatus,supabase,userName,updateChannelRef,sessionId});}finally{reconnectReplayInFlightRef.current=false;}})();},[isOnline,needsReload,saveToSupabase]);useEffect(()=>setupDebouncedSave({isInitialLoad,isFromServer,hasPendingChanges,saveTimeoutRef,pendingSaveDataRef,routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices,saveToSupabase}),[routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes,savedInvoices,saveToSupabase]);useEffect(()=>{if(!hasPendingChanges.current)return;if(isInitialLoad.current||isFromServer.current)return;if(saveTimeoutRef.current||pendingSaveDataRef.current)return;if(Object.keys(dirtyFieldsByRoute.current).length>0)return;hasPendingChanges.current=false;editedStores.current.clear();lastEditTime.current={};console.log('🧹 Cleared stale pending edit flag (no pending save)');},[routesByDate,storesDirectory,driversDirectory,trucksDirectory,trailersDirectory,tractorsDirectory,palletTypes]);// Check for username
 useEffect(()=>{if(!userName){setShowNameModal(true);}},[userName]);// ─────────────────────────────────────────────────────────────────────────
 // ╔╗
 // ║  SECTION 5: CALCULATIONS                                                    ║
