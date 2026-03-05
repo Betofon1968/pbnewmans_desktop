@@ -1,4 +1,4 @@
-// Entry point for Logistics Dashboard (ESM/ES6) - v26.120
+// Entry point for Logistics Dashboard (ESM/ES6) - v26.121
 // Wait for required UMD globals, then dynamically import the App module and render.
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -17,7 +17,7 @@ async function waitForGlobals() {
     window.updateProgress('Starting application...');
   }
 
-  const mod = await import('./App.js?v=26.120');
+  const mod = await import('./App.js?v=26.121');
   const App = mod.default;
 
   const rootEl = document.getElementById('root');

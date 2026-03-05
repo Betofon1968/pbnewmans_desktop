@@ -57,17 +57,53 @@ export default function AppModalsTertiary({
     setMoveTargetDate(selectedDate);
   }, [moveStoreModal, selectedDate]);
 
-  const loadRoutesForDate = React.useCallback(async (date) => {
-    if (!date || routesByDate[date]) return routesByDate[date] || [];
+  const getRouteDateCandidates = React.useCallback((date) => {
+    if (!date) return [];
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!isoMatch) return [date];
+    const [, year, month, day] = isoMatch;
+    const monthShort = String(Number(month));
+    const dayShort = String(Number(day));
+    return Array.from(
+      new Set([
+        `${year}-${month}-${day}`,
+        `${month}/${day}/${year}`,
+        `${monthShort}/${dayShort}/${year}`,
+        `${month}/${dayShort}/${year}`,
+        `${monthShort}/${day}/${year}`,
+      ])
+    );
+  }, []);
+
+  const loadRoutesForDate = React.useCallback(async (date, options = {}) => {
+    const { forceRefresh = false } = options;
+    if (!date) return [];
+    if (!forceRefresh && Array.isArray(routesByDate[date])) return routesByDate[date];
+
     setIsLoadingTargetRoutes(true);
     try {
-      const { data, error } = await supabase
-        .from('logistics_routes')
-        .select('*')
-        .eq('route_date', date)
-        .order('route_order', { ascending: true });
-      if (error) throw error;
-      const loadedRoutes = (data || []).map(mapRouteRecordToClientRoute);
+      const candidates = getRouteDateCandidates(date);
+      let rows = [];
+      let lastError = null;
+
+      for (let i = 0; i < candidates.length; i += 1) {
+        const candidate = candidates[i];
+        const { data, error } = await supabase
+          .from('logistics_routes')
+          .select('*')
+          .eq('route_date', candidate)
+          .order('route_order', { ascending: true });
+        if (error) {
+          lastError = error;
+          continue;
+        }
+        rows = data || [];
+        if (rows.length > 0 || i === candidates.length - 1) break;
+      }
+
+      if (lastError && rows.length === 0) throw lastError;
+
+      const loadedRoutes = rows.map(mapRouteRecordToClientRoute);
       setRoutesByDate((prev) => ({ ...prev, [date]: loadedRoutes }));
       return loadedRoutes;
     } catch (error) {
@@ -81,7 +117,7 @@ export default function AppModalsTertiary({
     } finally {
       setIsLoadingTargetRoutes(false);
     }
-  }, [mapRouteRecordToClientRoute, routesByDate, setInfoModal, setRoutesByDate, supabase]);
+  }, [getRouteDateCandidates, mapRouteRecordToClientRoute, routesByDate, setInfoModal, setRoutesByDate, supabase]);
 
   React.useEffect(() => {
     if (!moveStoreModal || moveMode !== 'another-day') return;
@@ -251,6 +287,19 @@ export default function AppModalsTertiary({
     setRoutesByDate,
     supabase,
   ]);
+
+  const sourceDateRouteCount = React.useMemo(() => {
+    const sourceDate = copyRoutesModal?.sourceDate;
+    if (!sourceDate) return 0;
+    if (Array.isArray(routesByDate[sourceDate])) return routesByDate[sourceDate].length;
+    return dateRouteCounts[sourceDate] || 0;
+  }, [copyRoutesModal, dateRouteCounts, routesByDate]);
+
+  const sourceDateKnownEmpty = React.useMemo(() => {
+    const sourceDate = copyRoutesModal?.sourceDate;
+    if (!sourceDate) return false;
+    return Array.isArray(routesByDate[sourceDate]) && routesByDate[sourceDate].length === 0;
+  }, [copyRoutesModal, routesByDate]);
 
   const renderMoveStoreModal = React.useCallback(() => {
     if (!moveStoreModal) return null;
@@ -437,10 +486,7 @@ export default function AppModalsTertiary({
   return /*#__PURE__*/ React.createElement(
     React.Fragment,
     null,
-    copyRoutesModal&&/*#__PURE__*/React.createElement("div",{style:{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999},onClick:e=>{if(e.target===e.currentTarget)setCopyRoutesModal(null);}},/*#__PURE__*/React.createElement("div",{style:{background:'white',padding:'24px',borderRadius:'16px',boxShadow:'0 20px 60px rgba(0,0,0,0.3)',width:'420px',maxWidth:'95vw'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'18px',color:'#333',display:'flex',alignItems:'center',gap:'10px'}},"\uD83D\uDCC5 Copy Routes From Date"),/*#__PURE__*/React.createElement("button",{onClick:()=>setCopyRoutesModal(null),style:{background:'none',border:'none',fontSize:'24px',color:'#999',cursor:'pointer',padding:'0',lineHeight:1}},"\xD7")),/*#__PURE__*/React.createElement("div",{style:{marginBottom:'16px'}},/*#__PURE__*/React.createElement("label",{style:{fontSize:'13px',color:'#666',display:'block',marginBottom:'8px'}},"Select date to copy from:"),/*#__PURE__*/React.createElement("input",{type:"date",value:copyRoutesModal.sourceDate,onChange:e=>setCopyRoutesModal(prev=>({...prev,sourceDate:e.target.value})),max:selectedDate,style:{width:'100%',padding:'12px 14px',border:'2px solid #e0e0e0',borderRadius:'8px',fontSize:'15px',boxSizing:'border-box'}})),copyRoutesModal.sourceDate&&/*#__PURE__*/React.createElement("div",{style:{padding:'12px',background:(dateRouteCounts[copyRoutesModal.sourceDate]||0)>0?'#e8f5e9':'#fff3e0',borderRadius:'8px',marginBottom:'16px',fontSize:'13px',color:(dateRouteCounts[copyRoutesModal.sourceDate]||0)>0?'#2e7d32':'#e65100'}},(dateRouteCounts[copyRoutesModal.sourceDate]||0)>0?/*#__PURE__*/React.createElement(React.Fragment,null,"\u2713 Found ",/*#__PURE__*/React.createElement("strong",null,dateRouteCounts[copyRoutesModal.sourceDate]," routes")," on this date",routesByDate[copyRoutesModal.sourceDate]&&/*#__PURE__*/React.createElement("div",{style:{marginTop:'6px',fontSize:'12px',opacity:0.8}},(()=>{const driverCounts={};(routesByDate[copyRoutesModal.sourceDate]||[]).forEach(r=>{const d=r.driver||'Unassigned';driverCounts[d]=(driverCounts[d]||0)+1;});return Object.entries(driverCounts).map(([d,c])=>`${d} ×${c}`).join(', ');})())):/*#__PURE__*/React.createElement(React.Fragment,null,"\u26A0\uFE0F No routes found on this date")),copyRoutesModal.replaceExisting&&/*#__PURE__*/React.createElement("div",{style:{padding:'12px',background:'#fff3e0',border:'2px solid #ff9800',borderRadius:'8px',marginBottom:'16px',fontSize:'13px',color:'#e65100'}},/*#__PURE__*/React.createElement("strong",null,"\u26A0\uFE0F Warning: "),"This will REPLACE ",routes.length," existing route(s) on ",selectedDate),/*#__PURE__*/React.createElement("div",{style:{marginBottom:'20px'}},/*#__PURE__*/React.createElement("label",{style:{fontSize:'13px',color:'#666',display:'block',marginBottom:'10px'}},"Copy options:"),/*#__PURE__*/React.createElement("label",{style:{display:'flex',alignItems:'center',gap:'10px',fontSize:'13px',color:'#333',marginBottom:'8px',cursor:'pointer'}},/*#__PURE__*/React.createElement("input",{type:"checkbox",checked:copyRoutesModal.keepDrivers,onChange:e=>setCopyRoutesModal(prev=>({...prev,keepDrivers:e.target.checked})),style:{width:'16px',height:'16px',accentColor:'#1a7f4b'}}),"Keep driver assignments"),/*#__PURE__*/React.createElement("label",{style:{display:'flex',alignItems:'center',gap:'10px',fontSize:'13px',color:'#333',marginBottom:'8px',cursor:'pointer'}},/*#__PURE__*/React.createElement("input",{type:"checkbox",checked:copyRoutesModal.keepTrucks,onChange:e=>setCopyRoutesModal(prev=>({...prev,keepTrucks:e.target.checked})),style:{width:'16px',height:'16px',accentColor:'#1a7f4b'}}),"Keep truck/trailer assignments"),/*#__PURE__*/React.createElement("label",{style:{display:'flex',alignItems:'center',gap:'10px',fontSize:'13px',color:'#333',cursor:'pointer'}},/*#__PURE__*/React.createElement("input",{type:"checkbox",checked:copyRoutesModal.clearPallets,onChange:e=>setCopyRoutesModal(prev=>({...prev,clearPallets:e.target.checked})),style:{width:'16px',height:'16px',accentColor:'#1a7f4b'}}),"Clear pallet counts (start fresh)")),/*#__PURE__*/React.createElement("div",{style:{display:'flex',gap:'12px',justifyContent:'flex-end'}},/*#__PURE__*/React.createElement("button",{onClick:()=>setCopyRoutesModal(null),style:{padding:'10px 20px',background:'#f5f5f5',border:'none',borderRadius:'8px',fontSize:'14px',fontWeight:500,color:'#666',cursor:'pointer'}},"Cancel"),/*#__PURE__*/React.createElement("button",{onClick:async()=>{if(!copyRoutesModal.sourceDate){setInfoModal({type:'warning',title:'Select a Date',message:'Please select a date to copy routes from.'});return;}const routeCount=dateRouteCounts[copyRoutesModal.sourceDate]||0;if(routeCount===0){setInfoModal({type:'warning',title:'No Routes Found',message:'The selected date has no routes to copy.'});return;}// If routes not loaded, fetch them first
-if(!routesByDate[copyRoutesModal.sourceDate]){try{const{data,error}=await supabase.from('logistics_routes').select('*').eq('route_date',copyRoutesModal.sourceDate).order('route_order',{ascending:true});if(error)throw error;const loadedRoutes=(data||[]).map(mapRouteRecordToClientRoute);setRoutesByDate(prev=>({...prev,[copyRoutesModal.sourceDate]:loadedRoutes}));// Copy immediately using loaded dataset (no timing race)
-copyRoutesFromDate(copyRoutesModal.sourceDate,{keepDrivers:copyRoutesModal.keepDrivers,keepTrucks:copyRoutesModal.keepTrucks,clearPallets:copyRoutesModal.clearPallets,replaceExisting:copyRoutesModal.replaceExisting||false,sourceRoutes:loadedRoutes});setCopyRoutesModal(null);}catch(err){console.error('Error loading routes:',err);setInfoModal({type:'error',title:'Error Loading Routes',message:'Failed to load routes from the selected date: '+err.message});}}else{// Routes already loaded, copy directly
-copyRoutesFromDate(copyRoutesModal.sourceDate,{keepDrivers:copyRoutesModal.keepDrivers,keepTrucks:copyRoutesModal.keepTrucks,clearPallets:copyRoutesModal.clearPallets,replaceExisting:copyRoutesModal.replaceExisting||false});setCopyRoutesModal(null);}},disabled:!copyRoutesModal.sourceDate||(dateRouteCounts[copyRoutesModal.sourceDate]||0)===0,style:{padding:'10px 20px',background:!copyRoutesModal.sourceDate||(dateRouteCounts[copyRoutesModal.sourceDate]||0)===0?'#ccc':'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',border:'none',borderRadius:'8px',fontSize:'14px',fontWeight:600,color:'white',cursor:!copyRoutesModal.sourceDate||(dateRouteCounts[copyRoutesModal.sourceDate]||0)===0?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:'6px'}},"\uD83D\uDCCB Copy ",(dateRouteCounts[copyRoutesModal.sourceDate]||0)>0?`${dateRouteCounts[copyRoutesModal.sourceDate]} Routes`:'Routes')))),
+    copyRoutesModal&&/*#__PURE__*/React.createElement("div",{style:{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:9999},onClick:e=>{if(e.target===e.currentTarget)setCopyRoutesModal(null);}},/*#__PURE__*/React.createElement("div",{style:{background:'white',padding:'24px',borderRadius:'16px',boxShadow:'0 20px 60px rgba(0,0,0,0.3)',width:'420px',maxWidth:'95vw'}},/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'20px'}},/*#__PURE__*/React.createElement("h3",{style:{margin:0,fontSize:'18px',color:'#333',display:'flex',alignItems:'center',gap:'10px'}},"\uD83D\uDCC5 Copy Routes From Date"),/*#__PURE__*/React.createElement("button",{onClick:()=>setCopyRoutesModal(null),style:{background:'none',border:'none',fontSize:'24px',color:'#999',cursor:'pointer',padding:'0',lineHeight:1}},"\xD7")),/*#__PURE__*/React.createElement("div",{style:{marginBottom:'16px'}},/*#__PURE__*/React.createElement("label",{style:{fontSize:'13px',color:'#666',display:'block',marginBottom:'8px'}},"Select date to copy from:"),/*#__PURE__*/React.createElement("input",{type:"date",value:copyRoutesModal.sourceDate,onChange:e=>setCopyRoutesModal(prev=>({...prev,sourceDate:e.target.value})),max:selectedDate,style:{width:'100%',padding:'12px 14px',border:'2px solid #e0e0e0',borderRadius:'8px',fontSize:'15px',boxSizing:'border-box'}})),copyRoutesModal.sourceDate&&/*#__PURE__*/React.createElement("div",{style:{padding:'12px',background:sourceDateRouteCount>0?'#e8f5e9':sourceDateKnownEmpty?'#fff3e0':'#e3f2fd',borderRadius:'8px',marginBottom:'16px',fontSize:'13px',color:sourceDateRouteCount>0?'#2e7d32':sourceDateKnownEmpty?'#e65100':'#1565c0'}},sourceDateRouteCount>0?/*#__PURE__*/React.createElement(React.Fragment,null,"\u2713 Found ",/*#__PURE__*/React.createElement("strong",null,sourceDateRouteCount," routes")," on this date",routesByDate[copyRoutesModal.sourceDate]&&/*#__PURE__*/React.createElement("div",{style:{marginTop:'6px',fontSize:'12px',opacity:0.8}},(()=>{const driverCounts={};(routesByDate[copyRoutesModal.sourceDate]||[]).forEach(r=>{const d=r.driver||'Unassigned';driverCounts[d]=(driverCounts[d]||0)+1;});return Object.entries(driverCounts).map(([d,c])=>`${d} ×${c}`).join(', ');})())):sourceDateKnownEmpty?/*#__PURE__*/React.createElement(React.Fragment,null,"\u26A0\uFE0F No routes found on this date"):/*#__PURE__*/React.createElement(React.Fragment,null,"\u2139\uFE0F Route count not loaded yet. Click Copy Routes to check this date.")),copyRoutesModal.replaceExisting&&/*#__PURE__*/React.createElement("div",{style:{padding:'12px',background:'#fff3e0',border:'2px solid #ff9800',borderRadius:'8px',marginBottom:'16px',fontSize:'13px',color:'#e65100'}},/*#__PURE__*/React.createElement("strong",null,"\u26A0\uFE0F Warning: "),"This will REPLACE ",routes.length," existing route(s) on ",selectedDate),/*#__PURE__*/React.createElement("div",{style:{marginBottom:'20px'}},/*#__PURE__*/React.createElement("label",{style:{fontSize:'13px',color:'#666',display:'block',marginBottom:'10px'}},"Copy options:"),/*#__PURE__*/React.createElement("label",{style:{display:'flex',alignItems:'center',gap:'10px',fontSize:'13px',color:'#333',marginBottom:'8px',cursor:'pointer'}},/*#__PURE__*/React.createElement("input",{type:"checkbox",checked:copyRoutesModal.keepDrivers,onChange:e=>setCopyRoutesModal(prev=>({...prev,keepDrivers:e.target.checked})),style:{width:'16px',height:'16px',accentColor:'#1a7f4b'}}),"Keep driver assignments"),/*#__PURE__*/React.createElement("label",{style:{display:'flex',alignItems:'center',gap:'10px',fontSize:'13px',color:'#333',marginBottom:'8px',cursor:'pointer'}},/*#__PURE__*/React.createElement("input",{type:"checkbox",checked:copyRoutesModal.keepTrucks,onChange:e=>setCopyRoutesModal(prev=>({...prev,keepTrucks:e.target.checked})),style:{width:'16px',height:'16px',accentColor:'#1a7f4b'}}),"Keep truck/trailer assignments"),/*#__PURE__*/React.createElement("label",{style:{display:'flex',alignItems:'center',gap:'10px',fontSize:'13px',color:'#333',cursor:'pointer'}},/*#__PURE__*/React.createElement("input",{type:"checkbox",checked:copyRoutesModal.clearPallets,onChange:e=>setCopyRoutesModal(prev=>({...prev,clearPallets:e.target.checked})),style:{width:'16px',height:'16px',accentColor:'#1a7f4b'}}),"Clear pallet counts (start fresh)")),/*#__PURE__*/React.createElement("div",{style:{display:'flex',gap:'12px',justifyContent:'flex-end'}},/*#__PURE__*/React.createElement("button",{onClick:()=>setCopyRoutesModal(null),style:{padding:'10px 20px',background:'#f5f5f5',border:'none',borderRadius:'8px',fontSize:'14px',fontWeight:500,color:'#666',cursor:'pointer'}},"Cancel"),/*#__PURE__*/React.createElement("button",{onClick:async()=>{if(!copyRoutesModal.sourceDate){setInfoModal({type:'warning',title:'Select a Date',message:'Please select a date to copy routes from.'});return;}try{const hasCachedRoutes=Array.isArray(routesByDate[copyRoutesModal.sourceDate]);const shouldForceRefresh=hasCachedRoutes&&routesByDate[copyRoutesModal.sourceDate].length===0;const sourceRoutes=hasCachedRoutes&&!shouldForceRefresh?routesByDate[copyRoutesModal.sourceDate]:await loadRoutesForDate(copyRoutesModal.sourceDate,{forceRefresh:shouldForceRefresh});if(!sourceRoutes||sourceRoutes.length===0){setInfoModal({type:'warning',title:'No Routes Found',message:'The selected date has no routes to copy.'});return;}copyRoutesFromDate(copyRoutesModal.sourceDate,{keepDrivers:copyRoutesModal.keepDrivers,keepTrucks:copyRoutesModal.keepTrucks,clearPallets:copyRoutesModal.clearPallets,replaceExisting:copyRoutesModal.replaceExisting||false,sourceRoutes});setCopyRoutesModal(null);}catch(err){console.error('Error loading routes:',err);setInfoModal({type:'error',title:'Error Loading Routes',message:'Failed to load routes from the selected date: '+err.message});}},disabled:!copyRoutesModal.sourceDate,style:{padding:'10px 20px',background:!copyRoutesModal.sourceDate?'#ccc':'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',border:'none',borderRadius:'8px',fontSize:'14px',fontWeight:600,color:'white',cursor:!copyRoutesModal.sourceDate?'not-allowed':'pointer',display:'flex',alignItems:'center',gap:'6px'}},"\uD83D\uDCCB Copy ",sourceDateRouteCount>0?`${sourceDateRouteCount} Routes`:'Routes')))),
     renderMoveStoreModal()
   );
 }

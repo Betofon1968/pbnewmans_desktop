@@ -1,4 +1,4 @@
-import { ACCOUNTS_MENU_ITEMS, getInvoiceWeekRange, getNextSequentialInvoiceNumber } from './logic/accounts/index.js?v=26.120';
+import { ACCOUNTS_MENU_ITEMS, getInvoiceWeekRange, getNextSequentialInvoiceNumber } from './logic/accounts/index.js?v=26.121';
 
 function AccountsTab(props){
   const {

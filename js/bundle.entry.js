@@ -1,4 +1,4 @@
-import App from './App.js?v=26.120';
+import App from './App.js?v=26.121';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

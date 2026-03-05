@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js?v=26.120';
+import {syncLog} from './syncDebug.js?v=26.121';
 export const setupPresenceTracking = ({
   supabase,
   user,
