@@ -1,4 +1,4 @@
-const CACHE_VERSION = '26.122';
+const CACHE_VERSION = '__APP_VERSION__';
 const CACHE_NAME = `pb-logistics-cache-${CACHE_VERSION}`;
 const CACHE_PREFIX = 'pb-logistics-cache-';
 const APP_PATH_PREFIX = self.location.pathname.replace(/service-worker\.js$/, '');
@@ -8,8 +8,8 @@ const PRECACHE_URLS = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './js/dist/vendor.bundle.js?v=26.122',
-  './js/dist/app.bundle.js?v=26.122'
+  './js/dist/vendor.bundle.js?v=__APP_VERSION__',
+  './js/dist/app.bundle.js?v=__APP_VERSION__'
 ];
 
 self.addEventListener('install', (event) => {

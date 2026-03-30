@@ -1,5 +1,5 @@
-import { loadInvoiceRoutesForRange, calculateInvoiceDataFromRoutes } from '../../../modules/invoices/invoiceService.js?v=26.121';
-import { getInvoiceWeekRange } from './invoiceHelpers.js?v=26.121';
+import { loadInvoiceRoutesForRange, calculateInvoiceDataFromRoutes } from '../../../modules/invoices/invoiceService.js';
+import { getInvoiceWeekRange } from './invoiceHelpers.js';
 
 export function useAccountsInvoices({ React, cachedData, supabase, storesDirectory }) {
   const { useState, useEffect, useCallback } = React;
@@ -83,3 +83,4 @@ export function useAccountsInvoices({ React, cachedData, supabase, storesDirecto
     calculateInvoiceData
   };
 }
+

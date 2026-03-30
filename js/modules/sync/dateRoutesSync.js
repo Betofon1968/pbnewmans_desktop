@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js?v=26.121';
+import {syncLog} from './syncDebug.js';
 
 const getActiveDirtyFields = ({ dirtyFields, dirtyFieldTimestamps, lastAcknowledgedSaveAt }) => {
   if (!dirtyFields) return new Set();
@@ -243,3 +243,4 @@ export const setupDateRoutesSync = ({
     removeRoutesChannel();
   };
 };
+

@@ -1,9 +1,12 @@
 {
   "name": "logistics-dashboard-desktop",
   "private": true,
-  "version": "26.121.0",
+  "version": "26.122.0",
   "scripts": {
-    "build": "node ./scripts/build-bundles.mjs"
+    "prepare:assets": "node ./scripts/prepare-assets.mjs",
+    "build": "npm run prepare:assets && node ./scripts/build-bundles.mjs",
+    "serve": "npm run prepare:assets && node ./scripts/start-local-server.mjs",
+    "bump": "node ./scripts/bump-version.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.45.0",

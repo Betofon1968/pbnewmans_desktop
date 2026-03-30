@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js?v=26.121';
+import {syncLog} from './syncDebug.js';
 export const setupOnlineOfflineSync = ({
   supabase,
   offlineTimestamp,
@@ -243,3 +243,4 @@ export const setupConfigRealtimeSync = ({
     removeConfigSubscription();
   };
 };
+

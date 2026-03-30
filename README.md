@@ -15,8 +15,9 @@ Desktop-first logistics dashboard for route planning, pallet tracking, BOL gener
 - Supabase (Auth, Postgres, Realtime)
 
 ## Build Bundles
+Run these commands from the repository root:
+
 ```bash
-cd "/Users/betofonseca/Documents/New project/logistics-dashboard-v27.35"
 npm install
 npm run build
 ```
@@ -26,7 +27,24 @@ Notes:
 - App startup does not depend on `unpkg.com`.
 
 ## Run Locally
+Cross-platform option:
+
 ```bash
-cd "/Users/betofonseca/Documents/New project/logistics-dashboard-v27.35"
-bash start-local-server.sh 5173
-# Open http://127.0.0.1:5173
+npm run serve -- 5173
+```
+
+macOS/Linux option:
+
+```bash
+./start-local-server.sh 5173
+```
+
+Open [http://127.0.0.1:5173/index.html](http://127.0.0.1:5173/index.html).
+
+## Versioning
+Use the helper script to bump the release version and restamp the generated assets:
+
+```bash
+npm run bump -- patch
+npm run bump -- 26.122.0
+```

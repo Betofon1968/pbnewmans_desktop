@@ -1,4 +1,4 @@
-import App from './App.js?v=26.121';
+import App from './App.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -41,3 +41,4 @@ async function waitForGlobals() {
     }
   } catch (_) {}
 });
+

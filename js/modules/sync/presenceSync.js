@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js?v=26.121';
+import {syncLog} from './syncDebug.js';
 export const setupPresenceTracking = ({
   supabase,
   user,
@@ -23,16 +23,7 @@ export const setupPresenceTracking = ({
     if (!presenceConnectedRef.current) {
       setActiveUsers((prev) =>
         prev.length === 0
-          ? [
-              {
-                name: userName,
-                session: 'self',
-                joinedAt: new Date().toISOString(),
-                currentDate: selectedDateRef.current,
-                sessionCount: 1,
-                isFallback: true,
-              },
-            ]
+          ? ensureSelfInActiveUsers([])
           : prev
       );
       syncLog('⚠ Presence fallback: showing self (not fully connected)');
@@ -61,6 +52,30 @@ export const setupPresenceTracking = ({
   let reconnectGeneration = 0;
   const transientTimeouts = new Set();
   let disposed = false;
+
+  const ensureSelfInActiveUsers = (users) => {
+    const nextUsers = Array.isArray(users) ? [...users] : [];
+    const hasSelf = nextUsers.some((entry) => {
+      if (user?.id && entry?.userId === user.id) return true;
+      return entry?.name === userName;
+    });
+    if (hasSelf) return nextUsers;
+    nextUsers.unshift({
+      userId: user?.id || null,
+      name: userName || 'You',
+      session: sessionId.current,
+      joinedAt: new Date().toISOString(),
+      currentDate: selectedDateRef.current,
+      sessionCount: 1,
+      isFallback: true,
+    });
+    return nextUsers;
+  };
+  const syncActiveUsersFromChannel = (channel) => {
+    const state = channel?.presenceState?.() || {};
+    const users = buildActiveUsersFromState(state);
+    setActiveUsers(ensureSelfInActiveUsers(users));
+  };
 
   const clearFallbackTimer = () => {
     if (fallbackTimer) {
@@ -222,6 +237,8 @@ export const setupPresenceTracking = ({
         syncLog('📡 Presence: first track successful, now showing connected');
       }
 
+      syncActiveUsersFromChannel(channel);
+
       return true;
     } catch (e) {
       trackFailStreak++;
@@ -305,23 +322,20 @@ export const setupPresenceTracking = ({
     channel
       .on('presence', { event: 'sync' }, () => {
         if (thisSetupId !== currentSetupId) return;
-        const state = channel.presenceState();
-        setActiveUsers(buildActiveUsersFromState(state));
+        syncActiveUsersFromChannel(channel);
       })
       .on('presence', { event: 'join' }, () => {
         if (thisSetupId !== currentSetupId) return;
         scheduleTransientTimeout(() => {
           if (thisSetupId !== currentSetupId) return;
-          const state = channel.presenceState();
-          setActiveUsers(buildActiveUsersFromState(state));
+          syncActiveUsersFromChannel(channel);
         }, 100);
       })
       .on('presence', { event: 'leave' }, () => {
         if (thisSetupId !== currentSetupId) return;
         scheduleTransientTimeout(() => {
           if (thisSetupId !== currentSetupId) return;
-          const state = channel.presenceState();
-          setActiveUsers(buildActiveUsersFromState(state));
+          syncActiveUsersFromChannel(channel);
         }, 100);
       })
       .subscribe(async (status) => {
@@ -364,8 +378,7 @@ export const setupPresenceTracking = ({
           clearSelfHealInterval();
           selfHealInterval = setInterval(() => {
             if (thisSetupId === currentSetupId && presenceChannelRef.current) {
-              const state = presenceChannelRef.current.presenceState();
-              setActiveUsers(buildActiveUsersFromState(state));
+              syncActiveUsersFromChannel(presenceChannelRef.current);
             }
           }, 15000);
 
@@ -527,3 +540,7 @@ export const syncPresenceDate = ({ presenceChannelRef, userName, user, presenceC
     })
     .catch((e) => console.warn('Presence track failed (date change):', e));
 };
+
+
+
+

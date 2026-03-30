@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js?v=26.121';
+import {syncLog} from './syncDebug.js';
 const parseStoredJson = (key, fallbackValue) => {
   try {
     const rawValue = localStorage.getItem(key);
@@ -1137,3 +1137,4 @@ export const setupDebouncedSave = ({
     }
   };
 };
+

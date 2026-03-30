@@ -1,4 +1,4 @@
-import { ACCOUNTS_MENU_ITEMS, getInvoiceWeekRange, getNextSequentialInvoiceNumber } from './logic/accounts/index.js?v=26.121';
+import { ACCOUNTS_MENU_ITEMS, getInvoiceWeekRange, getNextSequentialInvoiceNumber } from './logic/accounts/index.js';
 
 function AccountsTab(props){
   const {
@@ -299,3 +299,4 @@ const cols=header.split(',').map(c=>c.replace(/"/g,'').trim());const codeIdx=col
 }
 
 export default window.React.memo(AccountsTab);
+
