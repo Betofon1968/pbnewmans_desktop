@@ -1,7 +1,7 @@
 {
   "name": "logistics-dashboard-desktop",
   "private": true,
-  "version": "26.122.0",
+  "version": "26.123.0",
   "scripts": {
     "prepare:assets": "node ./scripts/prepare-assets.mjs",
     "build": "npm run prepare:assets && node ./scripts/build-bundles.mjs",

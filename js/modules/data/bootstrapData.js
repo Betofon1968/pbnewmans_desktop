@@ -200,7 +200,6 @@ export const setupBootstrapData = ({
           trailersDirectory: configSnapshot.trailers_directory,
           tractorsDirectory: configSnapshot.tractors_directory,
           palletTypes: configSnapshot.pallet_types,
-          savedInvoices: configSnapshot.saved_invoices,
         });
 
         console.log('✅ Data loaded and cached');
