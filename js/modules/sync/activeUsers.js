@@ -1,5 +1,3 @@
-const STALE_PRESENCE_MS = 90000;
-
 const parsePresenceTimestamp = (value) => {
   if (!value) return 0;
   const timestamp = Date.parse(value);
@@ -39,12 +37,12 @@ export const buildActiveUsersFromState = (state) => {
         'updated_at'
       );
       const onlineAt = parsePresenceTimestamp(timestampValue) || now;
-      if (now - onlineAt > STALE_PRESENCE_MS) return;
 
       const userId = readPresenceField(presence, 'user_id', 'id');
       const userName = readPresenceField(presence, 'user_name', 'name');
       const currentDate = readPresenceField(presence, 'current_date');
-      const sessionRef = readPresenceField(presence, 'phx_ref', 'presence_ref', 'session_id') || key;
+      const sessionRef =
+        readPresenceField(presence, 'presence_ref', 'phx_ref', 'session_id') || key;
       const groupKey = userId || userName || sessionRef;
       if (!groupKey) return;
 
