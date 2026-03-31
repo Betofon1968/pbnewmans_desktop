@@ -140,10 +140,33 @@ export const setupOnlineUsersBroadcast = ({
         event: 'presence-announce',
         payload,
       });
-      syncLog(`Presence broadcast sent (${reason})`);
+      if (reason !== 'heartbeat') {
+        syncLog(`Presence broadcast sent (${reason})`);
+      }
       return true;
     } catch (error) {
       console.warn('Presence broadcast failed:', error);
+      return false;
+    }
+  };
+
+  const requestPeerAnnounce = async (reason = 'request') => {
+    if (disposed || !channel || !subscribed) return false;
+
+    try {
+      await channel.send({
+        type: 'broadcast',
+        event: 'presence-request',
+        payload: {
+          sessionId: sessionId.current,
+          session_id: sessionId.current,
+          requested_at: new Date().toISOString(),
+        },
+      });
+      syncLog(`Presence peer request sent (${reason})`);
+      return true;
+    } catch (error) {
+      console.warn('Presence peer request failed:', error);
       return false;
     }
   };
@@ -195,8 +218,21 @@ export const setupOnlineUsersBroadcast = ({
       .channel('online-users-broadcast')
       .on('broadcast', { event: 'presence-announce' }, (payload) => {
         if (disposed || nextChannel !== channel) return;
-        if (!upsertSession(payload?.payload || {})) return;
+        const incomingPayload = payload?.payload || {};
+        if (!upsertSession(incomingPayload)) return;
+        syncLog(
+          'Presence announce received from:',
+          readField(incomingPayload, 'user_name', 'userName', 'name') || getSessionKey(incomingPayload)
+        );
         notifyUsersChanged();
+      })
+      .on('broadcast', { event: 'presence-request' }, (payload) => {
+        if (disposed || nextChannel !== channel) return;
+        const incomingPayload = payload?.payload || {};
+        const requesterSession = getSessionKey(incomingPayload);
+        if (!requesterSession || requesterSession === sessionId.current) return;
+        syncLog('Presence peer request received from:', requesterSession);
+        announce('reply');
       })
       .on('broadcast', { event: 'presence-leave' }, (payload) => {
         if (disposed || nextChannel !== channel) return;
@@ -220,6 +256,7 @@ export const setupOnlineUsersBroadcast = ({
             pruneSessions();
           }, PRUNE_INTERVAL_MS);
           await announce('subscribed');
+          await requestPeerAnnounce('subscribed');
           return;
         }
 
@@ -245,6 +282,7 @@ export const setupOnlineUsersBroadcast = ({
         return false;
       }
       announce('refresh');
+      requestPeerAnnounce('refresh');
       return true;
     },
     cleanup: () => {
