@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js';
+﻿import {syncLog} from './syncDebug.js';
 
 const getActiveDirtyFields = ({ dirtyFields, dirtyFieldTimestamps, lastAcknowledgedSaveAt }) => {
   if (!dirtyFields) return new Set();
@@ -85,11 +85,11 @@ export const setupDateRoutesSync = ({
     const thisSetupId = routesSetupIdRef.current;
 
     if (routesSubscriptionRef.current || activeChannel) {
-      syncLog('📡 Removing previous date routes channel');
+      syncLog('ðŸ“¡ Removing previous date routes channel');
       removeRoutesChannel();
     }
 
-    syncLog('📡 Subscribing to routes for date:', routeDate);
+    syncLog('ðŸ“¡ Subscribing to routes for date:', routeDate);
 
     const routesSubscription = supabase
       .channel(`routes_${routeDate}_${thisSetupId}`)
@@ -97,8 +97,14 @@ export const setupDateRoutesSync = ({
         'postgres_changes',
         { event: '*', schema: 'public', table: 'logistics_routes', filter: `route_date=eq.${routeDate}` },
         (payload) => {
+          if (isDisposed) return;
           if (thisSetupId !== routesSetupIdRef.current) {
-            syncLog('📡 Routes callback ignored (stale setup)');
+            syncLog('ðŸ“¡ Routes callback ignored (stale setup)');
+            return;
+          }
+
+          if (routesSubscription !== routesSubscriptionRef.current || routesSubscription !== activeChannel) {
+            syncLog("Routes callback ignored (stale channel)");
             return;
           }
 
@@ -106,13 +112,13 @@ export const setupDateRoutesSync = ({
           const lastFullReloadAt = lastAppliedRealtimeAtByDateRef?.current?.[eventDate] || 0;
           if (lastFullReloadAt && Date.now() - lastFullReloadAt < fullReloadSuppressionMs) {
             syncLog(
-              `📡 Route ${payload.eventType} skipped for ${eventDate} (recent full reload ${Date.now() - lastFullReloadAt}ms ago)`
+              `ðŸ“¡ Route ${payload.eventType} skipped for ${eventDate} (recent full reload ${Date.now() - lastFullReloadAt}ms ago)`
             );
             return;
           }
 
           syncLog(
-            '📡 Route update for',
+            'ðŸ“¡ Route update for',
             routeDate,
             ':',
             payload.eventType,
@@ -140,7 +146,7 @@ export const setupDateRoutesSync = ({
               recentLocalTs &&
               nowTs - recentLocalTs < localEchoSuppressMs
             ) {
-              syncLog('📡 Route update skipped (local echo):', route.id);
+              syncLog('ðŸ“¡ Route update skipped (local echo):', route.id);
               return;
             }
 
@@ -171,7 +177,7 @@ export const setupDateRoutesSync = ({
                 if (activeDirtyFields.size > 0 && existingIdx >= 0) {
                   const localRoute = updated[date][existingIdx];
                   finalRouteObj = mergeServerRouteIntoLocal(localRoute, serverRouteObj, activeDirtyFields);
-                  syncLog('🔀 Smart merge applied for route', route.id, 'fields:', Array.from(activeDirtyFields));
+                  syncLog('ðŸ”€ Smart merge applied for route', route.id, 'fields:', Array.from(activeDirtyFields));
                 } else {
                   finalRouteObj = serverRouteObj;
                 }
@@ -183,7 +189,7 @@ export const setupDateRoutesSync = ({
                 }
 
                 updated[date].sort((a, b) => (a.route_order || 0) - (b.route_order || 0));
-                syncLog('📡 Route synced:', route.driver || 'Unassigned', 'order:', finalRouteObj.route_order);
+                syncLog('ðŸ“¡ Route synced:', route.driver || 'Unassigned', 'order:', finalRouteObj.route_order);
                 if (lastRowRealtimeAtByDateRef?.current) {
                   lastRowRealtimeAtByDateRef.current[date] = Date.now();
                 }
@@ -197,7 +203,7 @@ export const setupDateRoutesSync = ({
           if (payload.eventType === 'DELETE') {
             const route = payload.old;
             const date = route.route_date;
-            syncLog('📡 Route DELETE received via postgres_changes:', route.id);
+            syncLog('ðŸ“¡ Route DELETE received via postgres_changes:', route.id);
 
             enterServerUpdate();
             try {
@@ -216,7 +222,13 @@ export const setupDateRoutesSync = ({
         }
       )
       .subscribe((status) => {
-        syncLog('📡 Routes subscription for', routeDate, ':', status);
+        if (isDisposed) return;
+        if (thisSetupId !== routesSetupIdRef.current) return;
+        if (routesSubscription !== routesSubscriptionRef.current || routesSubscription !== activeChannel) {
+          syncLog("Routes status ignored (stale channel):", status);
+          return;
+        }
+        syncLog('ðŸ“¡ Routes subscription for', routeDate, ':', status);
         if (typeof onStatusChange === 'function') onStatusChange(status, routeDate);
       });
 
@@ -227,7 +239,7 @@ export const setupDateRoutesSync = ({
   if (typeof onReconnectReady === 'function') {
     onReconnectReady(() => {
       if (isDisposed || !activeDate) return false;
-      syncLog('🔄 Reconnecting routes subscription for', activeDate);
+      syncLog('ðŸ”„ Reconnecting routes subscription for', activeDate);
       subscribeToDate(activeDate);
       return true;
     });
@@ -243,4 +255,3 @@ export const setupDateRoutesSync = ({
     removeRoutesChannel();
   };
 };
-

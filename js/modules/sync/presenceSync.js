@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js';
+﻿import {syncLog} from './syncDebug.js';
 export const setupPresenceTracking = ({
   supabase,
   user,
@@ -19,6 +19,9 @@ export const setupPresenceTracking = ({
 }) => {
   if (!userName) return () => {};
 
+  const DEFAULT_RECONNECT_BACKOFF_MS = 5000;
+  const MAX_RECONNECT_BACKOFF_MS = 120000;
+
   let fallbackTimer = setTimeout(() => {
     if (!presenceConnectedRef.current) {
       setActiveUsers((prev) =>
@@ -26,7 +29,7 @@ export const setupPresenceTracking = ({
           ? ensureSelfInActiveUsers([])
           : prev
       );
-      syncLog('⚠ Presence fallback: showing self (not fully connected)');
+      syncLog('âš  Presence fallback: showing self (not fully connected)');
     }
   }, 2000);
 
@@ -47,7 +50,7 @@ export const setupPresenceTracking = ({
   let stableTimer = null;
   let closeRecoveryTimer = null;
   let lastPresenceStatus = 'INIT';
-  let reconnectBackoffMs = 60000;
+  let reconnectBackoffMs = DEFAULT_RECONNECT_BACKOFF_MS;
   let setupEpoch = 0;
   let reconnectGeneration = 0;
   const transientTimeouts = new Set();
@@ -181,8 +184,8 @@ export const setupPresenceTracking = ({
     if (isLoggingOutRef.current) return;
 
     const thisGeneration = reconnectGeneration;
-    const delay = reconnectBackoffMs + Math.floor(Math.random() * 3000);
-    syncLog(`⚠ Presence degraded (${reason}). Will retry in ${Math.round(delay / 1000)}s`);
+    const delay = reconnectBackoffMs + Math.floor(Math.random() * 1500);
+    syncLog(`âš  Presence degraded (${reason}). Will retry in ${Math.round(delay / 1000)}s`);
 
     reconnectTimer = setTimeout(() => {
       if (thisGeneration !== reconnectGeneration) return;
@@ -190,8 +193,8 @@ export const setupPresenceTracking = ({
       if (disposed) return;
       if (isLoggingOutRef.current) return;
       if (!navigator.onLine || document.visibilityState !== 'visible') {
-        const deferredDelay = 15000 + Math.floor(Math.random() * 2000);
-        syncLog(`📡 Presence recovery deferred (online=${navigator.onLine}, visible=${document.visibilityState === 'visible'}). Retrying in ${Math.round(deferredDelay / 1000)}s`);
+        const deferredDelay = 5000 + Math.floor(Math.random() * 1000);
+        syncLog(`ðŸ“¡ Presence recovery deferred (online=${navigator.onLine}, visible=${document.visibilityState === 'visible'}). Retrying in ${Math.round(deferredDelay / 1000)}s`);
         reconnectTimer = setTimeout(() => {
           if (thisGeneration !== reconnectGeneration) return;
           reconnectTimer = null;
@@ -201,8 +204,8 @@ export const setupPresenceTracking = ({
         return;
       }
       retryCount = 0;
-      reconnectBackoffMs = Math.min(reconnectBackoffMs * 2, 10 * 60 * 1000);
-      syncLog('🔄 Attempting presence recovery...');
+      reconnectBackoffMs = Math.min(reconnectBackoffMs * 2, MAX_RECONNECT_BACKOFF_MS);
+      syncLog('ðŸ”„ Attempting presence recovery...');
       restartPresenceForSetup();
     }, delay);
   };
@@ -224,7 +227,7 @@ export const setupPresenceTracking = ({
       });
 
       if (disposed || setupId !== currentSetupId || channel !== presenceChannelRef.current) {
-        if (!disposed) syncLog('📡 Track completed but channel was replaced, ignoring result');
+        if (!disposed) syncLog('ðŸ“¡ Track completed but channel was replaced, ignoring result');
         return false;
       }
 
@@ -234,7 +237,7 @@ export const setupPresenceTracking = ({
         hasTrackedOnceRef.current = true;
         setPresenceConnected(true);
         presenceConnectedRef.current = true;
-        syncLog('📡 Presence: first track successful, now showing connected');
+        syncLog('ðŸ“¡ Presence: first track successful, now showing connected');
       }
 
       syncActiveUsersFromChannel(channel);
@@ -244,7 +247,7 @@ export const setupPresenceTracking = ({
       trackFailStreak++;
       console.warn('Presence track failed:', e);
       if (trackFailStreak >= 3) {
-        syncLog('⚠ Presence track failing repeatedly, marking degraded');
+        syncLog('âš  Presence track failing repeatedly, marking degraded');
         setPresenceConnected(false);
         presenceConnectedRef.current = false;
         hasTrackedOnceRef.current = false;
@@ -307,7 +310,7 @@ export const setupPresenceTracking = ({
         restartPresence();
       } else if (!hasGivenUp) {
         hasGivenUp = true;
-          syncLog('⚠ Presence: max retries reached, staying in degraded state');
+          syncLog('âš  Presence: max retries reached, staying in degraded state');
           clearSyncInterval();
           clearSelfHealInterval();
           setPresenceConnected(false);
@@ -358,15 +361,15 @@ export const setupPresenceTracking = ({
           hasGivenUp = false;
           trackFailStreak = 0;
           retryCount = 0;
-          reconnectBackoffMs = 60000;
+          reconnectBackoffMs = DEFAULT_RECONNECT_BACKOFF_MS;
 
           stableTimer = setTimeout(() => {
             stableTimer = null;
             if (disposed) return;
             if (thisSetupId === currentSetupId && presenceConnectedRef.current) {
               retryCount = 0;
-              reconnectBackoffMs = 60000;
-              syncLog('📡 Presence stable for 10s, reset retry count and backoff');
+              reconnectBackoffMs = DEFAULT_RECONNECT_BACKOFF_MS;
+              syncLog('ðŸ“¡ Presence stable for 10s, reset retry count and backoff');
             }
           }, 10000);
 
@@ -400,7 +403,7 @@ export const setupPresenceTracking = ({
             }, 2000 * retryCount);
           } else if (!hasGivenUp) {
             hasGivenUp = true;
-            syncLog('⚠ Presence: max retries reached, giving up');
+            syncLog('âš  Presence: max retries reached, giving up');
             clearSyncInterval();
             clearSelfHealInterval();
             setPresenceConnected(false);
@@ -439,7 +442,7 @@ export const setupPresenceTracking = ({
               restartPresenceForSetup(thisSetupId);
             } else if (!hasGivenUp) {
               hasGivenUp = true;
-              syncLog('⚠ Presence: max retries reached, giving up');
+              syncLog('âš  Presence: max retries reached, giving up');
               clearSyncInterval();
               clearSelfHealInterval();
               presenceChannelRef.current = null;
@@ -466,23 +469,42 @@ export const setupPresenceTracking = ({
 
   const handleVisibilityChange = () => {
     if (disposed) return;
-    if (document.visibilityState === 'visible' && presenceChannelRef.current && userName) {
-      syncLog('👁️ Tab visible again, re-tracking presence immediately');
+    if (document.visibilityState === 'visible' && userName) {
+      if (!presenceChannelRef.current || !presenceConnectedRef.current) {
+        syncLog("Presence degraded on visibilitychange; restarting");
+        retryCount = 0;
+        reconnectBackoffMs = DEFAULT_RECONNECT_BACKOFF_MS;
+        clearReconnectTimer();
+        restartPresenceForSetup();
+        return;
+      }
+
+      syncLog("Tab visible again; re-tracking presence immediately");
       lastPresenceTrackAt = Date.now();
       trackPresence(presenceChannelRef.current, selectedDateRef.current, currentSetupId);
     }
   };
 
   const handleFocus = () => {
+    if (disposed || !userName) return;
+    if (!presenceChannelRef.current || !presenceConnectedRef.current) {
+      syncLog("Presence degraded on focus; restarting");
+      retryCount = 0;
+      reconnectBackoffMs = DEFAULT_RECONNECT_BACKOFF_MS;
+      clearReconnectTimer();
+      restartPresenceForSetup();
+      return;
+    }
+
     throttledTrackPresence();
   };
 
   const handleOnlinePresence = () => {
     if (disposed) return;
     if (!presenceConnectedRef.current && userName) {
-      syncLog(' Network online, attempting presence recovery...');
+      syncLog("Network online; attempting presence recovery");
       retryCount = 0;
-      reconnectBackoffMs = 60000;
+      reconnectBackoffMs = DEFAULT_RECONNECT_BACKOFF_MS;
       clearReconnectTimer();
       restartPresenceForSetup();
     }
@@ -497,7 +519,7 @@ export const setupPresenceTracking = ({
     .on('broadcast', { event: 'logout-all' }, (payload) => {
       syncLog('Force logout received:', payload);
       if (payload.payload?.initiatedBy !== userName) {
-        alert('⚠ You have been logged out by an administrator.\n\nInitiated by: ' + (payload.payload?.initiatedBy || 'Admin'));
+        alert('âš  You have been logged out by an administrator.\n\nInitiated by: ' + (payload.payload?.initiatedBy || 'Admin'));
         handleLogout();
       }
     })
@@ -530,7 +552,7 @@ export const setupPresenceTracking = ({
 export const syncPresenceDate = ({ presenceChannelRef, userName, user, presenceConnectedRef, selectedDate }) => {
   if (!presenceChannelRef.current || !userName || !presenceConnectedRef.current) return;
 
-  syncLog('📅 Date changed, re-tracking presence with date:', selectedDate);
+  syncLog('ðŸ“… Date changed, re-tracking presence with date:', selectedDate);
   presenceChannelRef.current
     .track({
       user_id: user?.id || null,
@@ -540,7 +562,3 @@ export const syncPresenceDate = ({ presenceChannelRef, userName, user, presenceC
     })
     .catch((e) => console.warn('Presence track failed (date change):', e));
 };
-
-
-
-

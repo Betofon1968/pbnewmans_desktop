@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js';
+﻿import {syncLog} from './syncDebug.js';
 export const setupOnlineOfflineSync = ({
   supabase,
   offlineTimestamp,
@@ -19,14 +19,14 @@ export const setupOnlineOfflineSync = ({
   lastSavedData,
 }) => {
   const handleOffline = () => {
-    syncLog('⚠ Connection lost!');
+    syncLog('âš  Connection lost!');
     setIsOnline(false);
     offlineTimestamp.current = Date.now();
     setSyncStatus('error');
   };
 
   const handleOnline = async () => {
-    syncLog('🔄 Connection restored! Checking for data updates...');
+    syncLog('ðŸ”„ Connection restored! Checking for data updates...');
     setIsOnline(true);
 
     const wasOfflineMs = offlineTimestamp.current ? Date.now() - offlineTimestamp.current : 0;
@@ -115,9 +115,9 @@ export const setupOnlineOfflineSync = ({
           setTimeout(() => exitServerUpdate(), 300);
         }
 
-        syncLog('✅ Data reloaded from server after reconnection');
+        syncLog('âœ… Data reloaded from server after reconnection');
         alert(
-          `⚠ You were offline for ${wasOfflineSec} seconds.\n\nFresh data has been loaded from the server to prevent overwrites.\n\nIf you had unsaved changes, you can restore them from Settings > Restore Backup.`
+          `âš  You were offline for ${wasOfflineSec} seconds.\n\nFresh data has been loaded from the server to prevent overwrites.\n\nIf you had unsaved changes, you can restore them from Settings > Restore Backup.`
         );
         setSyncStatus('synced');
       } catch (err) {
@@ -140,7 +140,7 @@ export const setupOnlineOfflineSync = ({
     const currentlyOnline = navigator.onLine;
     setIsOnline((prev) => {
       if (prev !== currentlyOnline) {
-        syncLog(`Online status changed: ${prev} → ${currentlyOnline}`);
+        syncLog(`Online status changed: ${prev} â†’ ${currentlyOnline}`);
         if (!currentlyOnline && !offlineTimestamp.current) {
           offlineTimestamp.current = Date.now();
         }
@@ -188,18 +188,24 @@ export const setupConfigRealtimeSync = ({
   const subscribeConfig = () => {
     if (disposed) return;
     removeConfigSubscription();
-    configSubscription = supabase
+    const nextConfigSubscription = supabase
       .channel('config_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'logistics_config' }, (payload) => {
+        if (disposed) return;
+        if (nextConfigSubscription !== configSubscription) {
+          syncLog("Config update ignored (stale channel)");
+          return;
+        }
+
         const currentUserName = userNameRef.current;
         if (payload.new && payload.new.updated_by === currentUserName) return;
         if (hasPendingChanges.current) return;
 
         if (payload.new) {
-          syncLog('📡 Config updated from:', payload.new.updated_by);
+          syncLog('Config updated from:', payload.new.updated_by);
 
           if (!IS_BETA_BUILD && payload.new.app_version && isNewerVersion(payload.new.app_version, APP_VERSION)) {
-            syncLog(`⚠ Version mismatch detected! Server: ${payload.new.app_version}, Local: ${APP_VERSION}`);
+            syncLog(`Version mismatch detected! Server: ${payload.new.app_version}, Local: ${APP_VERSION}`);
             setVersionMismatch({ serverVersion: payload.new.app_version });
             return;
           }
@@ -219,15 +225,22 @@ export const setupConfigRealtimeSync = ({
         }
       })
       .subscribe((status) => {
-        syncLog('📡 Config subscription:', status);
+        if (disposed) return;
+        if (nextConfigSubscription !== configSubscription) {
+          syncLog("Config status ignored (stale channel):", status);
+          return;
+        }
+
+        syncLog('Config subscription:', status);
         if (typeof onStatusChange === 'function') onStatusChange(status);
       });
+    configSubscription = nextConfigSubscription;
   };
 
   if (typeof onReconnectReady === 'function') {
     onReconnectReady(() => {
       if (disposed) return false;
-      syncLog('🔄 Reconnecting config subscription');
+      syncLog('ðŸ”„ Reconnecting config subscription');
       subscribeConfig();
       return true;
     });
@@ -243,4 +256,3 @@ export const setupConfigRealtimeSync = ({
     removeConfigSubscription();
   };
 };
-

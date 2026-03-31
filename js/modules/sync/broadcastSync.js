@@ -1,4 +1,4 @@
-import {syncLog} from './syncDebug.js';
+﻿import {syncLog} from './syncDebug.js';
 
 export const setupRouteBroadcastSync = ({
   supabase,
@@ -47,7 +47,7 @@ export const setupRouteBroadcastSync = ({
     const now = Date.now();
     const lastAppliedAt = appliedRealtimeRef.current[routeDate] || 0;
     if (lastAppliedAt && now - lastAppliedAt < recentApplySuppressionMs) {
-      syncLog(`📡 Skip full reload for ${routeDate} (${reason}) - applied ${now - lastAppliedAt}ms ago`);
+      syncLog(`ðŸ“¡ Skip full reload for ${routeDate} (${reason}) - applied ${now - lastAppliedAt}ms ago`);
       return false;
     }
 
@@ -66,7 +66,7 @@ export const setupRouteBroadcastSync = ({
     }
 
     appliedRealtimeRef.current[routeDate] = Date.now();
-    syncLog(`✅ Routes reloaded (${reason}) for ${routeDate}`);
+    syncLog(`âœ… Routes reloaded (${reason}) for ${routeDate}`);
     return true;
   };
 
@@ -94,7 +94,7 @@ export const setupRouteBroadcastSync = ({
 
       const lastRowAt = rowRealtimeRef.current[routeDate] || 0;
       if (lastRowAt && lastRowAt >= meta.receivedAt - rowCoverageMs) {
-        syncLog(`📡 Skip full reload for ${routeDate} (${meta.reason}) - row updates already covered it`);
+        syncLog(`ðŸ“¡ Skip full reload for ${routeDate} (${meta.reason}) - row updates already covered it`);
         return;
       }
 
@@ -129,14 +129,20 @@ export const setupRouteBroadcastSync = ({
   const subscribeDeleteChannel = () => {
     if (disposed) return;
     removeDeleteChannel();
-    deleteChannel = supabase
+    const nextDeleteChannel = supabase
       .channel('route-deletions')
       .on('broadcast', { event: 'route-deleted' }, async (payload) => {
+        if (disposed) return;
+        if (nextDeleteChannel !== deleteChannelRef.current || nextDeleteChannel !== deleteChannel) {
+          syncLog("Delete broadcast ignored (stale channel)");
+          return;
+        }
+
         const { routeId, routeDate, deletedBy, sessionId: senderSessionId } = payload.payload || {};
         if (!routeDate) return;
         if (senderSessionId && senderSessionId === sessionId.current) return;
 
-        syncLog('📡 Route deletion broadcast received:', routeId, 'from:', deletedBy);
+        syncLog('Route deletion broadcast received:', routeId, 'from:', deletedBy);
         if (typeof onBroadcastEvent === 'function') {
           onBroadcastEvent({
             type: 'route-deleted',
@@ -149,25 +155,38 @@ export const setupRouteBroadcastSync = ({
         scheduleCoalescedReload(routeDate, 'route-deleted broadcast', Date.now());
       })
       .subscribe((status) => {
-        syncLog('📡 Delete broadcast channel:', status);
+        if (disposed) return;
+        if (nextDeleteChannel !== deleteChannelRef.current || nextDeleteChannel !== deleteChannel) {
+          syncLog("Delete broadcast status ignored (stale channel):", status);
+          return;
+        }
+
+        syncLog('Delete broadcast channel:', status);
         if (typeof onDeleteStatus === 'function') {
           onDeleteStatus(status);
         }
       });
-    deleteChannelRef.current = deleteChannel;
+    deleteChannel = nextDeleteChannel;
+    deleteChannelRef.current = nextDeleteChannel;
   };
 
   const subscribeUpdateChannel = () => {
     if (disposed) return;
     removeUpdateChannel();
-    updateChannel = supabase
+    const nextUpdateChannel = supabase
       .channel('route-updates')
       .on('broadcast', { event: 'routes-changed' }, async (payload) => {
+        if (disposed) return;
+        if (nextUpdateChannel !== updateChannelRef.current || nextUpdateChannel !== updateChannel) {
+          syncLog("Update broadcast ignored (stale channel)");
+          return;
+        }
+
         const { routeDate, updatedBy, sessionId: senderSessionId } = payload.payload || {};
         if (!routeDate) return;
         if (senderSessionId && senderSessionId === sessionId.current) return;
 
-        syncLog('📡 Routes change notification received for', routeDate, 'from:', updatedBy);
+        syncLog('Routes change notification received for', routeDate, 'from:', updatedBy);
         if (typeof onBroadcastEvent === 'function') {
           onBroadcastEvent({
             type: 'routes-changed',
@@ -179,24 +198,31 @@ export const setupRouteBroadcastSync = ({
         scheduleCoalescedReload(routeDate, 'routes-changed broadcast', Date.now());
       })
       .subscribe((status) => {
-        syncLog('📡 Update broadcast channel:', status);
+        if (disposed) return;
+        if (nextUpdateChannel !== updateChannelRef.current || nextUpdateChannel !== updateChannel) {
+          syncLog("Update broadcast status ignored (stale channel):", status);
+          return;
+        }
+
+        syncLog('Update broadcast channel:', status);
         if (typeof onUpdateStatus === 'function') {
           onUpdateStatus(status);
         }
       });
-    updateChannelRef.current = updateChannel;
+    updateChannel = nextUpdateChannel;
+    updateChannelRef.current = nextUpdateChannel;
   };
 
   if (typeof onReconnectReady === 'function') {
     onReconnectReady('broadcastDelete', () => {
       if (disposed) return false;
-      syncLog('🔄 Reconnecting delete broadcast channel');
+      syncLog('ðŸ”„ Reconnecting delete broadcast channel');
       subscribeDeleteChannel();
       return true;
     });
     onReconnectReady('broadcastUpdate', () => {
       if (disposed) return false;
-      syncLog('🔄 Reconnecting update broadcast channel');
+      syncLog('ðŸ”„ Reconnecting update broadcast channel');
       subscribeUpdateChannel();
       return true;
     });
@@ -220,4 +246,3 @@ export const setupRouteBroadcastSync = ({
     removeUpdateChannel();
   };
 };
-

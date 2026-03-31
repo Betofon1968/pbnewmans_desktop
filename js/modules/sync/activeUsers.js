@@ -1,4 +1,4 @@
-const parsePresenceTimestamp = (value) => {
+﻿const parsePresenceTimestamp = (value) => {
   if (!value) return 0;
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) ? timestamp : 0;
@@ -16,6 +16,7 @@ const readPresenceField = (presence, ...fieldNames) => {
     if (presence?.[fieldName] != null) return presence[fieldName];
     if (presence?.payload?.[fieldName] != null) return presence.payload[fieldName];
     if (presence?.meta?.[fieldName] != null) return presence.meta[fieldName];
+    if (presence?.details?.[fieldName] != null) return presence.details[fieldName];
   }
   return null;
 };
@@ -32,17 +33,21 @@ export const buildActiveUsersFromState = (state) => {
       const timestampValue = readPresenceField(
         presence,
         'online_at',
+        'onlineAt',
         'joined_at',
+        'joinedAt',
         'inserted_at',
-        'updated_at'
+        'insertedAt',
+        'updated_at',
+        'updatedAt'
       );
       const onlineAt = parsePresenceTimestamp(timestampValue) || now;
 
-      const userId = readPresenceField(presence, 'user_id', 'id');
-      const userName = readPresenceField(presence, 'user_name', 'name');
-      const currentDate = readPresenceField(presence, 'current_date');
+      const userId = readPresenceField(presence, 'user_id', 'userId', 'id');
+      const userName = readPresenceField(presence, 'user_name', 'userName', 'name');
+      const currentDate = readPresenceField(presence, 'current_date', 'currentDate');
       const sessionRef =
-        readPresenceField(presence, 'presence_ref', 'phx_ref', 'session_id') || key;
+        readPresenceField(presence, 'presence_ref', 'presenceRef', 'phx_ref', 'session_id', 'sessionId') || key;
       const groupKey = userId || userName || sessionRef;
       if (!groupKey) return;
 
