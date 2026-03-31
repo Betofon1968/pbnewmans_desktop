@@ -35,7 +35,6 @@ export const setupPresenceTracking = ({
 
   let retryCount = 0;
   const maxRetries = 3;
-  const PRESENCE_HEARTBEAT_MS = 10000;
   let syncInterval = null;
   let selfHealInterval = null;
   let subscriptionTimeout = null;
@@ -380,9 +379,6 @@ export const setupPresenceTracking = ({
           }, 10000);
 
           clearSyncInterval();
-          syncInterval = setInterval(() => {
-            if (thisSetupId === currentSetupId) trackPresence(channel, selectedDateRef.current, thisSetupId);
-          }, PRESENCE_HEARTBEAT_MS);
 
           clearSelfHealInterval();
           selfHealInterval = setInterval(() => {
@@ -485,9 +481,8 @@ export const setupPresenceTracking = ({
         return;
       }
 
-      syncLog("Tab visible again; re-tracking presence immediately");
-      lastPresenceTrackAt = Date.now();
-      trackPresence(presenceChannelRef.current, selectedDateRef.current, currentSetupId);
+      syncLog("Tab visible again; keeping existing presence channel");
+      syncActiveUsersFromChannel(presenceChannelRef.current);
     }
   };
 
@@ -502,7 +497,8 @@ export const setupPresenceTracking = ({
       return;
     }
 
-    throttledTrackPresence();
+    syncLog("Window focused; keeping existing presence channel");
+    syncActiveUsersFromChannel(presenceChannelRef.current);
   };
 
   const handleOnlinePresence = () => {
