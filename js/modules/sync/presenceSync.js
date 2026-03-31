@@ -35,6 +35,7 @@ export const setupPresenceTracking = ({
 
   let retryCount = 0;
   const maxRetries = 3;
+  const PRESENCE_HEARTBEAT_MS = 10000;
   let syncInterval = null;
   let selfHealInterval = null;
   let subscriptionTimeout = null;
@@ -215,6 +216,11 @@ export const setupPresenceTracking = ({
     if (setupId !== currentSetupId) return false;
     if (isTrackingInFlight && trackingSetupId === setupId) return false;
     if (!userName) return false;
+    const channelState = String(channel?.state || '').toLowerCase();
+    if (channelState && channelState !== 'joined') {
+      syncLog(`Presence track skipped while channel state=${channelState}`);
+      return false;
+    }
 
     isTrackingInFlight = true;
     trackingSetupId = setupId;
@@ -376,7 +382,7 @@ export const setupPresenceTracking = ({
           clearSyncInterval();
           syncInterval = setInterval(() => {
             if (thisSetupId === currentSetupId) trackPresence(channel, selectedDateRef.current, thisSetupId);
-          }, 30000);
+          }, PRESENCE_HEARTBEAT_MS);
 
           clearSelfHealInterval();
           selfHealInterval = setInterval(() => {
@@ -552,13 +558,6 @@ export const setupPresenceTracking = ({
 export const syncPresenceDate = ({ presenceChannelRef, userName, user, presenceConnectedRef, selectedDate }) => {
   if (!presenceChannelRef.current || !userName || !presenceConnectedRef.current) return;
 
-  syncLog('ðŸ“… Date changed, re-tracking presence with date:', selectedDate);
-  presenceChannelRef.current
-    .track({
-      user_id: user?.id || null,
-      user_name: userName,
-      online_at: new Date().toISOString(),
-      current_date: selectedDate,
-    })
-    .catch((e) => console.warn('Presence track failed (date change):', e));
+  const channelState = String(presenceChannelRef.current?.state || '').toLowerCase();
+  syncLog('Date changed, waiting for presence heartbeat to publish date:', selectedDate, 'state:', channelState || 'unknown');
 };
