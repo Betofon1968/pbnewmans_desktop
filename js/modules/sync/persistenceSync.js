@@ -19,6 +19,9 @@ const SAVE_RETRY_DELAYS_MS = [1000, 2000, 4000];
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const MUTATION_QUEUE_KEY = 'logistics_mutation_queue_v1';
 const MAX_MUTATION_QUEUE_ITEMS = 100;
+const LOCAL_BACKUP_KEY = 'logistics_backup';
+const LOCAL_BACKUP_HISTORY_KEY = 'logistics_backup_history';
+const LOCAL_BACKUP_HISTORY_LIMIT = 2;
 
 const ROUTE_CLIENT_TO_DB_FIELD = {
   driver: 'driver',
@@ -496,28 +499,57 @@ const replayMutationQueueOnReconnect = async ({
 };
 
 export const saveLocalBackupToStorage = (data) => {
+  const buildBackupSnapshot = (source) => ({
+    timestamp: new Date().toISOString(),
+    routesByDate: source.routesByDate,
+    storesDirectory: source.storesDirectory,
+    driversDirectory: source.driversDirectory,
+    trucksDirectory: source.trucksDirectory,
+    trailersDirectory: source.trailersDirectory,
+    tractorsDirectory: source.tractorsDirectory,
+    palletTypes: source.palletTypes,
+    // Invoices are the largest payload in practice and already live in Supabase.
+    // Omitting them keeps automatic browser backups under localStorage quota.
+    savedInvoicesOmitted: Array.isArray(source.savedInvoices) ? source.savedInvoices.length : 0,
+  });
+
+  const sanitizeBackupSnapshot = (snapshot) => {
+    if (!snapshot || typeof snapshot !== 'object') return null;
+    const sanitized = { ...snapshot };
+    delete sanitized.savedInvoices;
+    if (sanitized.savedInvoicesOmitted == null) {
+      sanitized.savedInvoicesOmitted = Array.isArray(snapshot.savedInvoices) ? snapshot.savedInvoices.length : 0;
+    }
+    return sanitized;
+  };
+
+  const readBackupHistory = () => {
+    const backupHistory = parseStoredJson(LOCAL_BACKUP_HISTORY_KEY, []);
+    if (!Array.isArray(backupHistory)) return [];
+    return backupHistory.map(sanitizeBackupSnapshot).filter(Boolean);
+  };
+
+  const writeBackupHistory = (backup, limit = LOCAL_BACKUP_HISTORY_LIMIT) => {
+    const existingHistory = readBackupHistory().filter((entry) => entry.timestamp !== backup.timestamp);
+    const nextHistory = [backup, ...existingHistory].slice(0, limit);
+    localStorage.setItem(LOCAL_BACKUP_HISTORY_KEY, JSON.stringify(nextHistory));
+  };
+
   try {
-    const backup = {
-      timestamp: new Date().toISOString(),
-      routesByDate: data.routesByDate,
-      storesDirectory: data.storesDirectory,
-      driversDirectory: data.driversDirectory,
-      trucksDirectory: data.trucksDirectory,
-      trailersDirectory: data.trailersDirectory,
-      tractorsDirectory: data.tractorsDirectory,
-      palletTypes: data.palletTypes,
-      savedInvoices: data.savedInvoices,
-    };
+    const backup = buildBackupSnapshot(data);
 
-    localStorage.setItem('logistics_backup', JSON.stringify(backup));
-
-    const backupHistory = parseStoredJson('logistics_backup_history', []);
-    const safeBackupHistory = Array.isArray(backupHistory) ? backupHistory : [];
-    safeBackupHistory.unshift(backup);
-    if (safeBackupHistory.length > 5) safeBackupHistory.pop();
-    localStorage.setItem('logistics_backup_history', JSON.stringify(safeBackupHistory));
+    localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(backup));
+    writeBackupHistory(backup, LOCAL_BACKUP_HISTORY_LIMIT);
   } catch (e) {
-    console.warn('Could not save local backup:', e);
+    try {
+      const backup = buildBackupSnapshot(data);
+      localStorage.removeItem(LOCAL_BACKUP_HISTORY_KEY);
+      localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(backup));
+      localStorage.setItem(LOCAL_BACKUP_HISTORY_KEY, JSON.stringify([backup]));
+      console.warn('Local backup history trimmed to recover from quota pressure.');
+    } catch (retryError) {
+      console.warn('Could not save local backup:', retryError);
+    }
   }
 };
 
@@ -536,11 +568,13 @@ export const restoreFromLocalBackup = ({
   hasPendingChanges,
 }) => {
   try {
-    const backupHistoryRaw = parseStoredJson('logistics_backup_history', []);
+    const backupHistoryRaw = parseStoredJson(LOCAL_BACKUP_HISTORY_KEY, []);
     const backupHistory = Array.isArray(backupHistoryRaw) ? backupHistoryRaw : [];
+    const latestBackup = parseStoredJson(LOCAL_BACKUP_KEY, null);
+    const availableBackups = backupHistory.length > 0 ? backupHistory : latestBackup ? [latestBackup] : [];
 
-    if (backupHistory.length > backupIndex) {
-      const backup = backupHistory[backupIndex];
+    if (availableBackups.length > backupIndex) {
+      const backup = availableBackups[backupIndex];
       if (
         window.confirm(
           `Restore backup from ${new Date(backup.timestamp).toLocaleString('en-US')}?\n\nThis will replace current data with the backup.`
@@ -555,7 +589,9 @@ export const restoreFromLocalBackup = ({
           setTrailersDirectory(backup.trailersDirectory || []);
           setTractorsDirectory(backup.tractorsDirectory || []);
           setPalletTypes(backup.palletTypes || []);
-          setSavedInvoices(backup.savedInvoices || []);
+          if (Object.prototype.hasOwnProperty.call(backup, 'savedInvoices')) {
+            setSavedInvoices(backup.savedInvoices || []);
+          }
         } finally {
           setTimeout(() => {
             exitServerUpdate();
