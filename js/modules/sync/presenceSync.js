@@ -1,4 +1,7 @@
-﻿import {syncLog} from './syncDebug.js';
+import {syncLog} from './syncDebug.js';
+import {setupOnlineUsersBroadcast} from './onlineUsersBroadcast.js';
+
+let publishPresenceUpdate = null;
 export const setupPresenceTracking = ({
   supabase,
   user,
@@ -74,8 +77,13 @@ export const setupPresenceTracking = ({
     });
     return nextUsers;
   };
+  let onlineUsersBroadcast = null;
+  const getCombinedPresenceState = (channel) => ({
+    ...(channel?.presenceState?.() || {}),
+    ...(onlineUsersBroadcast?.getState?.() || {}),
+  });
   const syncActiveUsersFromChannel = (channel) => {
-    const state = channel?.presenceState?.() || {};
+    const state = getCombinedPresenceState(channel);
     const users = buildActiveUsersFromState(state);
     setActiveUsers(ensureSelfInActiveUsers(users));
   };
@@ -177,6 +185,13 @@ export const setupPresenceTracking = ({
     restartPresence();
     return true;
   };
+
+  const announcePresenceDateUpdate = (nextDate = selectedDateRef.current) => {
+    if (!onlineUsersBroadcast) return false;
+    onlineUsersBroadcast.announce('date-change', nextDate);
+    return true;
+  };
+  publishPresenceUpdate = announcePresenceDateUpdate;
 
   const schedulePresenceReconnect = (reason) => {
     if (disposed) return;
@@ -455,6 +470,18 @@ export const setupPresenceTracking = ({
       });
   };
 
+  onlineUsersBroadcast = setupOnlineUsersBroadcast({
+    supabase,
+    user,
+    userName,
+    selectedDateRef,
+    sessionId,
+    onUsersChanged: () => {
+      if (disposed) return;
+      syncActiveUsersFromChannel(presenceChannelRef.current);
+    },
+  });
+
   setupPresence();
 
   let lastPresenceTrackAt = 0;
@@ -482,6 +509,7 @@ export const setupPresenceTracking = ({
       }
 
       syncLog("Tab visible again; keeping existing presence channel");
+      onlineUsersBroadcast?.refresh?.();
       syncActiveUsersFromChannel(presenceChannelRef.current);
     }
   };
@@ -498,11 +526,13 @@ export const setupPresenceTracking = ({
     }
 
     syncLog("Window focused; keeping existing presence channel");
+    onlineUsersBroadcast?.refresh?.();
     syncActiveUsersFromChannel(presenceChannelRef.current);
   };
 
   const handleOnlinePresence = () => {
     if (disposed) return;
+    onlineUsersBroadcast?.refresh?.();
     if (!presenceConnectedRef.current && userName) {
       syncLog("Network online; attempting presence recovery");
       retryCount = 0;
@@ -529,6 +559,9 @@ export const setupPresenceTracking = ({
 
   return () => {
     disposed = true;
+    if (publishPresenceUpdate === announcePresenceDateUpdate) {
+      publishPresenceUpdate = null;
+    }
     if (typeof onReconnectReady === 'function') {
       onReconnectReady(null);
     }
@@ -547,13 +580,20 @@ export const setupPresenceTracking = ({
       presenceChannelRef.current = null;
     }
 
+    onlineUsersBroadcast?.cleanup?.();
     supabase.removeChannel(forceLogoutChannel);
   };
 };
 
 export const syncPresenceDate = ({ presenceChannelRef, userName, user, presenceConnectedRef, selectedDate }) => {
-  if (!presenceChannelRef.current || !userName || !presenceConnectedRef.current) return;
+  if (!userName) return;
+  if (typeof publishPresenceUpdate === 'function') {
+    syncLog('Date changed, broadcasting active date:', selectedDate);
+    publishPresenceUpdate(selectedDate);
+    return;
+  }
+  if (!presenceChannelRef.current || !presenceConnectedRef.current) return;
 
   const channelState = String(presenceChannelRef.current?.state || '').toLowerCase();
-  syncLog('Date changed, waiting for presence heartbeat to publish date:', selectedDate, 'state:', channelState || 'unknown');
+  syncLog('Date changed, waiting for presence refresh to publish date:', selectedDate, 'state:', channelState || 'unknown');
 };
