@@ -20,9 +20,11 @@ export const setupRouteBroadcastSync = ({
   coalesceWindowMs = 450,
   rowCoverageMs = 900,
   recentApplySuppressionMs = 500,
+  duplicateBroadcastSuppressionMs = 5000,
 }) => {
   const pendingReloadTimersByDate = new Map();
   const pendingReloadMetaByDate = new Map();
+  const recentBroadcastFingerprints = new Map();
   const serverUpdateExitTimers = new Set();
   const appliedRealtimeRef = lastAppliedRealtimeAtByDateRef || { current: {} };
   const rowRealtimeRef = lastRowRealtimeAtByDateRef || { current: {} };
@@ -43,11 +45,53 @@ export const setupRouteBroadcastSync = ({
     serverUpdateExitTimers.add(timerId);
   };
 
+  const buildRouteIdsKey = (routeIds) => {
+    if (!Array.isArray(routeIds) || routeIds.length === 0) return '';
+    return routeIds.map((routeId) => String(routeId)).sort().join(',');
+  };
+
+  const pruneRecentBroadcastFingerprints = (now = Date.now()) => {
+    recentBroadcastFingerprints.forEach((seenAt, fingerprint) => {
+      if (now - seenAt > duplicateBroadcastSuppressionMs) {
+        recentBroadcastFingerprints.delete(fingerprint);
+      }
+    });
+  };
+
+  const buildBroadcastFingerprint = ({
+    type,
+    routeDate,
+    routeId,
+    senderSessionId,
+    senderName,
+    eventTs,
+    routeIds,
+  }) => {
+    const normalizedRouteDate = routeDate || 'unknown-date';
+    const normalizedSender = senderSessionId || senderName || 'unknown-sender';
+    const normalizedTs = Number.isFinite(Number(eventTs)) ? String(Number(eventTs)) : '';
+    const normalizedIds = routeId ? String(routeId) : buildRouteIdsKey(routeIds);
+    const keyPart = normalizedTs || normalizedIds;
+    if (!keyPart) return null;
+    return `${type}|${normalizedRouteDate}|${normalizedSender}|${keyPart}`;
+  };
+
+  const isDuplicateBroadcast = (fingerprint, now = Date.now()) => {
+    if (!fingerprint) return false;
+    pruneRecentBroadcastFingerprints(now);
+    const lastSeenAt = recentBroadcastFingerprints.get(fingerprint) || 0;
+    if (lastSeenAt && now - lastSeenAt < duplicateBroadcastSuppressionMs) {
+      return true;
+    }
+    recentBroadcastFingerprints.set(fingerprint, now);
+    return false;
+  };
+
   const applyRouteDateSnapshot = (routeDate, loadedRoutes, reason) => {
     const now = Date.now();
     const lastAppliedAt = appliedRealtimeRef.current[routeDate] || 0;
     if (lastAppliedAt && now - lastAppliedAt < recentApplySuppressionMs) {
-      syncLog(`ðŸ“¡ Skip full reload for ${routeDate} (${reason}) - applied ${now - lastAppliedAt}ms ago`);
+      syncLog(`Skip full reload for ${routeDate} (${reason}) - applied ${now - lastAppliedAt}ms ago`);
       return false;
     }
 
@@ -66,7 +110,7 @@ export const setupRouteBroadcastSync = ({
     }
 
     appliedRealtimeRef.current[routeDate] = Date.now();
-    syncLog(`âœ… Routes reloaded (${reason}) for ${routeDate}`);
+    syncLog(`Routes reloaded (${reason}) for ${routeDate}`);
     return true;
   };
 
@@ -94,7 +138,7 @@ export const setupRouteBroadcastSync = ({
 
       const lastRowAt = rowRealtimeRef.current[routeDate] || 0;
       if (lastRowAt && lastRowAt >= meta.receivedAt - rowCoverageMs) {
-        syncLog(`ðŸ“¡ Skip full reload for ${routeDate} (${meta.reason}) - row updates already covered it`);
+        syncLog(`Skip full reload for ${routeDate} (${meta.reason}) - row updates already covered it`);
         return;
       }
 
@@ -138,9 +182,22 @@ export const setupRouteBroadcastSync = ({
           return;
         }
 
-        const { routeId, routeDate, deletedBy, sessionId: senderSessionId } = payload.payload || {};
+        const { routeId, routeDate, deletedBy, sessionId: senderSessionId, ts: eventTs } = payload.payload || {};
         if (!routeDate) return;
         if (senderSessionId && senderSessionId === sessionId.current) return;
+        const receivedAt = Date.now();
+        const fingerprint = buildBroadcastFingerprint({
+          type: 'route-deleted',
+          routeDate,
+          routeId,
+          senderSessionId,
+          senderName: deletedBy,
+          eventTs,
+        });
+        if (isDuplicateBroadcast(fingerprint, receivedAt)) {
+          syncLog('Skip duplicate route-deleted broadcast for', routeDate, 'route:', routeId, 'from:', deletedBy);
+          return;
+        }
 
         syncLog('Route deletion broadcast received:', routeId, 'from:', deletedBy);
         if (typeof onBroadcastEvent === 'function') {
@@ -149,10 +206,10 @@ export const setupRouteBroadcastSync = ({
             routeDate,
             routeId,
             user: deletedBy,
-            receivedAt: Date.now(),
+            receivedAt,
           });
         }
-        scheduleCoalescedReload(routeDate, 'route-deleted broadcast', Date.now());
+        scheduleCoalescedReload(routeDate, 'route-deleted broadcast', receivedAt);
       })
       .subscribe((status) => {
         if (disposed) return;
@@ -182,9 +239,22 @@ export const setupRouteBroadcastSync = ({
           return;
         }
 
-        const { routeDate, updatedBy, sessionId: senderSessionId } = payload.payload || {};
+        const { routeDate, updatedBy, sessionId: senderSessionId, routeIds, ts: eventTs } = payload.payload || {};
         if (!routeDate) return;
         if (senderSessionId && senderSessionId === sessionId.current) return;
+        const receivedAt = Date.now();
+        const fingerprint = buildBroadcastFingerprint({
+          type: 'routes-changed',
+          routeDate,
+          senderSessionId,
+          senderName: updatedBy,
+          eventTs,
+          routeIds,
+        });
+        if (isDuplicateBroadcast(fingerprint, receivedAt)) {
+          syncLog('Skip duplicate routes-changed broadcast for', routeDate, 'from:', updatedBy);
+          return;
+        }
 
         syncLog('Routes change notification received for', routeDate, 'from:', updatedBy);
         if (typeof onBroadcastEvent === 'function') {
@@ -192,10 +262,10 @@ export const setupRouteBroadcastSync = ({
             type: 'routes-changed',
             routeDate,
             user: updatedBy,
-            receivedAt: Date.now(),
+            receivedAt,
           });
         }
-        scheduleCoalescedReload(routeDate, 'routes-changed broadcast', Date.now());
+        scheduleCoalescedReload(routeDate, 'routes-changed broadcast', receivedAt);
       })
       .subscribe((status) => {
         if (disposed) return;
@@ -216,13 +286,13 @@ export const setupRouteBroadcastSync = ({
   if (typeof onReconnectReady === 'function') {
     onReconnectReady('broadcastDelete', () => {
       if (disposed) return false;
-      syncLog('ðŸ”„ Reconnecting delete broadcast channel');
+      syncLog('Reconnect delete broadcast channel');
       subscribeDeleteChannel();
       return true;
     });
     onReconnectReady('broadcastUpdate', () => {
       if (disposed) return false;
-      syncLog('ðŸ”„ Reconnecting update broadcast channel');
+      syncLog('Reconnect update broadcast channel');
       subscribeUpdateChannel();
       return true;
     });
@@ -240,6 +310,7 @@ export const setupRouteBroadcastSync = ({
     pendingReloadTimersByDate.forEach((timerId) => clearTimeout(timerId));
     pendingReloadTimersByDate.clear();
     pendingReloadMetaByDate.clear();
+    recentBroadcastFingerprints.clear();
     serverUpdateExitTimers.forEach((timerId) => clearTimeout(timerId));
     serverUpdateExitTimers.clear();
     removeDeleteChannel();

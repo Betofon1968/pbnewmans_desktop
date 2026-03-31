@@ -19,14 +19,14 @@ export const setupOnlineOfflineSync = ({
   lastSavedData,
 }) => {
   const handleOffline = () => {
-    syncLog('âš  Connection lost!');
+    syncLog('Warning: Connection lost!');
     setIsOnline(false);
     offlineTimestamp.current = Date.now();
     setSyncStatus('error');
   };
 
   const handleOnline = async () => {
-    syncLog('ðŸ”„ Connection restored! Checking for data updates...');
+    syncLog('Connection restored. Checking for data updates...');
     setIsOnline(true);
 
     const wasOfflineMs = offlineTimestamp.current ? Date.now() - offlineTimestamp.current : 0;
@@ -115,9 +115,9 @@ export const setupOnlineOfflineSync = ({
           setTimeout(() => exitServerUpdate(), 300);
         }
 
-        syncLog('âœ… Data reloaded from server after reconnection');
+        syncLog('Data reloaded from server after reconnection');
         alert(
-          `âš  You were offline for ${wasOfflineSec} seconds.\n\nFresh data has been loaded from the server to prevent overwrites.\n\nIf you had unsaved changes, you can restore them from Settings > Restore Backup.`
+          `You were offline for ${wasOfflineSec} seconds.\n\nFresh data has been loaded from the server to prevent overwrites.\n\nIf you had unsaved changes, you can restore them from Settings > Restore Backup.`
         );
         setSyncStatus('synced');
       } catch (err) {
@@ -140,7 +140,7 @@ export const setupOnlineOfflineSync = ({
     const currentlyOnline = navigator.onLine;
     setIsOnline((prev) => {
       if (prev !== currentlyOnline) {
-        syncLog(`Online status changed: ${prev} â†’ ${currentlyOnline}`);
+        syncLog(`Online status changed: ${prev} -> ${currentlyOnline}`);
         if (!currentlyOnline && !offlineTimestamp.current) {
           offlineTimestamp.current = Date.now();
         }
@@ -240,7 +240,7 @@ export const setupConfigRealtimeSync = ({
   if (typeof onReconnectReady === 'function') {
     onReconnectReady(() => {
       if (disposed) return false;
-      syncLog('ðŸ”„ Reconnecting config subscription');
+      syncLog('Reconnect config subscription');
       subscribeConfig();
       return true;
     });

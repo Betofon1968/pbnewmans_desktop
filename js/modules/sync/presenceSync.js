@@ -32,7 +32,7 @@ export const setupPresenceTracking = ({
           ? ensureSelfInActiveUsers([])
           : prev
       );
-      syncLog('âš  Presence fallback: showing self (not fully connected)');
+      syncLog('Warning: Presence fallback: showing self (not fully connected)');
     }
   }, 2000);
 
@@ -200,7 +200,7 @@ export const setupPresenceTracking = ({
 
     const thisGeneration = reconnectGeneration;
     const delay = reconnectBackoffMs + Math.floor(Math.random() * 1500);
-    syncLog(`âš  Presence degraded (${reason}). Will retry in ${Math.round(delay / 1000)}s`);
+    syncLog(`Warning: Presence degraded (${reason}). Will retry in ${Math.round(delay / 1000)}s`);
 
     reconnectTimer = setTimeout(() => {
       if (thisGeneration !== reconnectGeneration) return;
@@ -209,7 +209,7 @@ export const setupPresenceTracking = ({
       if (isLoggingOutRef.current) return;
       if (!navigator.onLine || document.visibilityState !== 'visible') {
         const deferredDelay = 5000 + Math.floor(Math.random() * 1000);
-        syncLog(`ðŸ“¡ Presence recovery deferred (online=${navigator.onLine}, visible=${document.visibilityState === 'visible'}). Retrying in ${Math.round(deferredDelay / 1000)}s`);
+        syncLog(`Presence recovery deferred (online=${navigator.onLine}, visible=${document.visibilityState === 'visible'}). Retrying in ${Math.round(deferredDelay / 1000)}s`);
         reconnectTimer = setTimeout(() => {
           if (thisGeneration !== reconnectGeneration) return;
           reconnectTimer = null;
@@ -220,7 +220,7 @@ export const setupPresenceTracking = ({
       }
       retryCount = 0;
       reconnectBackoffMs = Math.min(reconnectBackoffMs * 2, MAX_RECONNECT_BACKOFF_MS);
-      syncLog('ðŸ”„ Attempting presence recovery...');
+      syncLog('Attempting presence recovery...');
       restartPresenceForSetup();
     }, delay);
   };
@@ -247,7 +247,7 @@ export const setupPresenceTracking = ({
       });
 
       if (disposed || setupId !== currentSetupId || channel !== presenceChannelRef.current) {
-        if (!disposed) syncLog('ðŸ“¡ Track completed but channel was replaced, ignoring result');
+        if (!disposed) syncLog('Track completed but channel was replaced, ignoring result');
         return false;
       }
 
@@ -257,7 +257,7 @@ export const setupPresenceTracking = ({
         hasTrackedOnceRef.current = true;
         setPresenceConnected(true);
         presenceConnectedRef.current = true;
-        syncLog('ðŸ“¡ Presence: first track successful, now showing connected');
+        syncLog('Presence: first track successful, now showing connected');
       }
 
       syncActiveUsersFromChannel(channel);
@@ -267,7 +267,7 @@ export const setupPresenceTracking = ({
       trackFailStreak++;
       console.warn('Presence track failed:', e);
       if (trackFailStreak >= 3) {
-        syncLog('âš  Presence track failing repeatedly, marking degraded');
+        syncLog('Warning: Presence track failing repeatedly, marking degraded');
         setPresenceConnected(false);
         presenceConnectedRef.current = false;
         hasTrackedOnceRef.current = false;
@@ -330,7 +330,7 @@ export const setupPresenceTracking = ({
         restartPresence();
       } else if (!hasGivenUp) {
         hasGivenUp = true;
-          syncLog('âš  Presence: max retries reached, staying in degraded state');
+          syncLog('Warning: Presence: max retries reached, staying in degraded state');
           clearSyncInterval();
           clearSelfHealInterval();
           setPresenceConnected(false);
@@ -389,7 +389,7 @@ export const setupPresenceTracking = ({
             if (thisSetupId === currentSetupId && presenceConnectedRef.current) {
               retryCount = 0;
               reconnectBackoffMs = DEFAULT_RECONNECT_BACKOFF_MS;
-              syncLog('ðŸ“¡ Presence stable for 10s, reset retry count and backoff');
+              syncLog('Presence stable for 10s, reset retry count and backoff');
             }
           }, 10000);
 
@@ -420,7 +420,7 @@ export const setupPresenceTracking = ({
             }, 2000 * retryCount);
           } else if (!hasGivenUp) {
             hasGivenUp = true;
-            syncLog('âš  Presence: max retries reached, giving up');
+            syncLog('Warning: Presence: max retries reached, giving up');
             clearSyncInterval();
             clearSelfHealInterval();
             setPresenceConnected(false);
@@ -459,7 +459,7 @@ export const setupPresenceTracking = ({
               restartPresenceForSetup(thisSetupId);
             } else if (!hasGivenUp) {
               hasGivenUp = true;
-              syncLog('âš  Presence: max retries reached, giving up');
+              syncLog('Warning: Presence: max retries reached, giving up');
               clearSyncInterval();
               clearSelfHealInterval();
               presenceChannelRef.current = null;
@@ -551,7 +551,7 @@ export const setupPresenceTracking = ({
     .on('broadcast', { event: 'logout-all' }, (payload) => {
       syncLog('Force logout received:', payload);
       if (payload.payload?.initiatedBy !== userName) {
-        alert('âš  You have been logged out by an administrator.\n\nInitiated by: ' + (payload.payload?.initiatedBy || 'Admin'));
+        alert('You have been logged out by an administrator.\n\nInitiated by: ' + (payload.payload?.initiatedBy || 'Admin'));
         handleLogout();
       }
     })
