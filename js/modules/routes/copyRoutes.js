@@ -69,7 +69,7 @@ export function createCopyRoutesFromDateHandler({
       palletCount: 8,
       stores: route.stores.map((store, sIdx) => ({
         ...store,
-        id: Date.now() + idx * 100 + sIdx,
+        id: crypto.randomUUID(),
         pallets: clearPallets ? ['', '', '', '', '', '', '', ''] : [...(store.pallets || [])],
         palletTypes: clearPallets
           ? ['FZ', 'FZ', 'FZ', 'FZ', 'FZ', 'FZ', 'DR', 'FH']

@@ -11,7 +11,7 @@ export function createRouteStoreOpsHandlers({
   const addStore = (routeId) => {
     hasPendingChanges.current = true;
 
-    const newId = Date.now() + Math.floor(Math.random() * 1000);
+    const newId = crypto.randomUUID();
     const route = routes.find((r) => r.id === routeId);
     const driverRoutes = routes.filter((r) => r.driver === route?.driver);
     const routeNum = driverRoutes.indexOf(route) + 1;

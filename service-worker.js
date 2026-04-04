@@ -1,4 +1,4 @@
-const CACHE_VERSION = '26.132';
+const CACHE_VERSION = '26.133';
 const CACHE_NAME = `pb-logistics-cache-${CACHE_VERSION}`;
 const CACHE_PREFIX = 'pb-logistics-cache-';
 const APP_PATH_PREFIX = self.location.pathname.replace(/service-worker\.js$/, '');
@@ -8,8 +8,8 @@ const PRECACHE_URLS = [
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './js/dist/vendor.bundle.js?v=26.132',
-  './js/dist/app.bundle.js?v=26.132'
+  './js/dist/vendor.bundle.js?v=26.133',
+  './js/dist/app.bundle.js?v=26.133'
 ];
 
 self.addEventListener('install', (event) => {
@@ -54,7 +54,13 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(async () => {
           const cache = await caches.open(CACHE_NAME);
-          return (await cache.match('./index.html')) || (await cache.match('./'));
+          const cached = (await cache.match('./index.html')) || (await cache.match('./'));
+          if (cached) {
+            const headers = new Headers(cached.headers);
+            headers.set('X-SW-Fallback', 'true');
+            return new Response(cached.body, { status: cached.status, statusText: cached.statusText, headers });
+          }
+          return cached;
         })
     );
     return;
@@ -70,7 +76,14 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => {
+          if (cached) {
+            const headers = new Headers(cached.headers);
+            headers.set('X-SW-Fallback', 'true');
+            return new Response(cached.body, { status: cached.status, statusText: cached.statusText, headers });
+          }
+          return cached;
+        });
 
       return cached || networkFetch;
     })

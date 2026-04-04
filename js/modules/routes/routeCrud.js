@@ -146,7 +146,7 @@ export function createRouteCrudHandlers({
     pushUndo('Add new route', null, routes);
 
     const newId = generateUUID();
-    const newStoreId = Date.now();
+    const newStoreId = crypto.randomUUID();
     const currentRoutes = routes;
     const newRouteOrder = currentRoutes.length;
     const newRouteName = `Route #${newRouteOrder + 1}`;

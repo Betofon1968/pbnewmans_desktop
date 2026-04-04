@@ -282,7 +282,7 @@ export const setupPresenceTracking = ({
     }
   };
 
-  const restartPresence = () => {
+  const restartPresence = async () => {
     if (disposed) return;
     isRestartingPresence = true;
     currentSetupId++;
@@ -291,8 +291,9 @@ export const setupPresenceTracking = ({
     trackingSetupId = 0;
 
     if (presenceChannelRef.current) {
-      supabase.removeChannel(presenceChannelRef.current);
+      const channelToRemove = presenceChannelRef.current;
       presenceChannelRef.current = null;
+      try { await supabase.removeChannel(channelToRemove); } catch (_) {}
     }
 
     setupPresence();
@@ -551,7 +552,8 @@ export const setupPresenceTracking = ({
     .on('broadcast', { event: 'logout-all' }, (payload) => {
       syncLog('Force logout received:', payload);
       if (payload.payload?.initiatedBy !== userName) {
-        alert('You have been logged out by an administrator.\n\nInitiated by: ' + (payload.payload?.initiatedBy || 'Admin'));
+        const initiator = String(payload.payload?.initiatedBy || 'Admin').replace(/[^\w\s@.\-]/g, '').slice(0, 60);
+        alert('You have been logged out by an administrator.\n\nInitiated by: ' + initiator);
         handleLogout();
       }
     })

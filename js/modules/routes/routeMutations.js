@@ -37,7 +37,8 @@ export function createRouteMutationsHandlers({
 
     const lowerVal = typeof value === 'string' ? value.toLowerCase().trim() : '';
     const isPending = value === '?' || lowerVal === 'p' || lowerVal === 'plt';
-    const newValue = value === '' ? null : isPending ? '?' : parseInt(value) || null;
+    const parsed = parseInt(value, 10);
+    const newValue = value === '' ? null : isPending ? '?' : Number.isFinite(parsed) ? parsed : null;
 
     setRoutes((prev) =>
       prev.map((r) => {
@@ -75,12 +76,14 @@ export function createRouteMutationsHandlers({
 
             if (field === 'palletType') {
               const palletTypes = [...(s.palletTypes || Array(r.palletCount || 8).fill('F'))];
+              if (value.index < 0 || value.index >= palletTypes.length) return s;
               palletTypes[value.index] = value.type;
               return { ...s, palletTypes };
             }
 
             if (field === 'palletLink') {
               const palletLinks = [...(s.palletLinks || Array(r.palletCount || 8).fill(false))];
+              if (value.index < 0 || value.index >= palletLinks.length) return s;
               palletLinks[value.index] = !palletLinks[value.index];
               return { ...s, palletLinks };
             }

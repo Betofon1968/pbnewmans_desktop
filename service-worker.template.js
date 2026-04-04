@@ -54,7 +54,13 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(async () => {
           const cache = await caches.open(CACHE_NAME);
-          return (await cache.match('./index.html')) || (await cache.match('./'));
+          const cached = (await cache.match('./index.html')) || (await cache.match('./'));
+          if (cached) {
+            const headers = new Headers(cached.headers);
+            headers.set('X-SW-Fallback', 'true');
+            return new Response(cached.body, { status: cached.status, statusText: cached.statusText, headers });
+          }
+          return cached;
         })
     );
     return;
@@ -70,7 +76,14 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => {
+          if (cached) {
+            const headers = new Headers(cached.headers);
+            headers.set('X-SW-Fallback', 'true');
+            return new Response(cached.body, { status: cached.status, statusText: cached.statusText, headers });
+          }
+          return cached;
+        });
 
       return cached || networkFetch;
     })
