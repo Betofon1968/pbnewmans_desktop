@@ -38,7 +38,7 @@ export function createRouteMutationsHandlers({
     const lowerVal = typeof value === 'string' ? value.toLowerCase().trim() : '';
     const isPending = value === '?' || lowerVal === 'p' || lowerVal === 'plt';
     const parsed = parseInt(value, 10);
-    const newValue = value === '' ? null : isPending ? '?' : Number.isFinite(parsed) ? parsed : null;
+    const newValue = value === '' ? null : isPending ? '?' : Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 
     setRoutes((prev) =>
       prev.map((r) => {

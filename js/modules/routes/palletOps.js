@@ -95,7 +95,8 @@ export function createPalletOpsHandlers({ setRoutes, MIN_PALLETS, MAX_PALLETS })
         const lastColumnIndex = route.palletCount - 1;
         const lastColumnHasData = route.stores.some((store) => {
           const pallets = store.pallets || [];
-          return pallets[lastColumnIndex] !== null && pallets[lastColumnIndex] !== undefined;
+          const val = pallets[lastColumnIndex];
+          return (val && typeof val === 'number' && val > 0) || val === '?';
         });
 
         if (lastColumnHasData) {
