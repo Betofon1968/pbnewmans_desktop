@@ -22,7 +22,7 @@ export function createPalletOpsHandlers({ setRoutes, MIN_PALLETS, MAX_PALLETS })
               value,
               type: normalizedType,
               link: links[idx] || false,
-              hasValue: value !== null && value !== undefined && value !== ''
+              hasValue: (value && typeof value === 'number' && value > 0) || value === '?'
             };
           });
 

@@ -235,7 +235,7 @@ const grandPltDisplay=groupTotalPallets;manifestHTML+=`
                       ${fitToPage?'</div>':''}
                       </body>
                       </html>
-                    `;const popup=window.open('','_blank','width=1100,height=800');popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='loading-sequence'){// Option 5: Loading Sequence
+                    `;const popup=window.open('','_blank','width=1100,height=800');if(!popup){alert('Pop-up blocked. Please allow pop-ups for this site to print.');return;}popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='loading-sequence'){// Option 5: Loading Sequence
 // Calculate scale for fit-to-page
 const storeCountLS=routes.reduce((sum,r)=>sum+r.stores.length,0);let scaleLS=100;if(fitToPage){if(storeCountLS>30)scaleLS=55;else if(storeCountLS>20)scaleLS=65;else if(storeCountLS>15)scaleLS=75;else if(storeCountLS>10)scaleLS=85;}let manifestHTML=`
                       <html>
@@ -300,7 +300,7 @@ if(p&&typeof p==='number'&&p>0||p==='?'){const pType=types[pIdx]||palletTypes[0]
                         ${fitToPage?'</div>':''}
                       </body>
                       </html>
-                    `;const popup=window.open('','_blank','width=900,height=800');popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='summary-cards'){// Option 2: Route Summary Cards
+                    `;const popup=window.open('','_blank','width=900,height=800');if(!popup){alert('Pop-up blocked. Please allow pop-ups for this site to print.');return;}popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='summary-cards'){// Option 2: Route Summary Cards
 // Calculate scale for fit-to-page
 const routeCountSC=routes.length;let scaleSC=100;if(fitToPage){if(routeCountSC>10)scaleSC=60;else if(routeCountSC>8)scaleSC=70;else if(routeCountSC>6)scaleSC=80;else if(routeCountSC>4)scaleSC=90;}let manifestHTML=`
                       <html>
@@ -378,7 +378,7 @@ if(p&&typeof p==='number'&&p>0||p==='?'){routeTotal++;grandTotalPallets++;const 
                         ${fitToPage?'</div>':''}
                       </body>
                       </html>
-                    `;const popup=window.open('','_blank','width=900,height=800');popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='pick-list'){// Option 3: Pallet Pick List
+                    `;const popup=window.open('','_blank','width=900,height=800');if(!popup){alert('Pop-up blocked. Please allow pop-ups for this site to print.');return;}popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='pick-list'){// Option 3: Pallet Pick List
 // Calculate scale for fit-to-page
 const typeCountPL=palletTypes.filter(pt=>{let hasStores=false;routes.forEach(route=>{route.stores.forEach(store=>{const types=store.palletTypes||[];(store.pallets||[]).forEach((p,pIdx)=>{if(p&&typeof p==='number'&&p>0||p==='?'){const pType=types[pIdx]||'FZ';if(pType===pt.abbrev)hasStores=true;}});});});return hasStores;}).length;let scalePL=100;if(fitToPage){if(typeCountPL>4)scalePL=70;else if(typeCountPL>3)scalePL=80;else if(typeCountPL>2)scalePL=90;}let manifestHTML=`
                       <html>
@@ -430,7 +430,7 @@ if(p&&typeof p==='number'&&p>0||p==='?'){const pType=types[pIdx]||palletTypes[0]
                         ${fitToPage?'</div>':''}
                       </body>
                       </html>
-                    `;const popup=window.open('','_blank','width=900,height=800');popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='driver-checklist'){// Option 4: Driver Checklist
+                    `;const popup=window.open('','_blank','width=900,height=800');if(!popup){alert('Pop-up blocked. Please allow pop-ups for this site to print.');return;}popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='driver-checklist'){// Option 4: Driver Checklist
 // Calculate scale for fit-to-page
 const storeCountDC=routes.reduce((sum,r)=>sum+r.stores.length,0);let scaleDC=100;if(fitToPage){if(storeCountDC>30)scaleDC=60;else if(storeCountDC>20)scaleDC=70;else if(storeCountDC>15)scaleDC=80;else if(storeCountDC>10)scaleDC=90;}let manifestHTML=`
                       <html>
@@ -491,7 +491,7 @@ const storeCountDC=routes.reduce((sum,r)=>sum+r.stores.length,0);let scaleDC=100
                             </div>
                           </div>
                         </div>
-                      `;});manifestHTML+=`${fitToPage?'</div>':''}</body></html>`;const popup=window.open('','_blank','width=900,height=800');popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='store-labels'){// Option 6: Store Labels
+                      `;});manifestHTML+=`${fitToPage?'</div>':''}</body></html>`;const popup=window.open('','_blank','width=900,height=800');if(!popup){alert('Pop-up blocked. Please allow pop-ups for this site to print.');return;}popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}if(manifestFormat==='store-labels'){// Option 6: Store Labels
 // Calculate scale for fit-to-page
 const totalLabelsSL=routes.reduce((sum,r)=>{return sum+r.stores.reduce((storeSum,store)=>{return storeSum+(store.pallets||[]).filter(p=>p&&typeof p==='number'&&p>0||p==='?').length;},0);},0);let scaleSL=100;if(fitToPage){if(totalLabelsSL>30)scaleSL=60;else if(totalLabelsSL>24)scaleSL=70;else if(totalLabelsSL>18)scaleSL=80;else if(totalLabelsSL>12)scaleSL=90;}let manifestHTML=`
                       <html>
@@ -537,7 +537,7 @@ palletTypes.forEach(pt=>{const pallets=palletsByType[pt.abbrev];pallets.forEach(
                         ${fitToPage?'</div>':''}
                       </body>
                       </html>
-                    `;const popup=window.open('','_blank','width=1000,height=800');popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}// Default: Original manifest format (for other options not yet implemented)
+                    `;const popup=window.open('','_blank','width=1000,height=800');if(!popup){alert('Pop-up blocked. Please allow pop-ups for this site to print.');return;}popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();return;}// Default: Original manifest format (for other options not yet implemented)
 // Generate Warehouse Manifest with colors
 // Check if any routes are not confirmed
 const unconfirmedRoutes=routes.filter(r=>!r.confirmed);const hasUnconfirmedRoutes=unconfirmedRoutes.length>0;// Calculate scaling based on content
@@ -733,7 +733,7 @@ manifestHTML+=`
                     </div>
                     </body>
                     </html>
-                  `;const popup=window.open('','_blank','width=1100,height=800');popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();},style:{background:'#333',color:'white',border:'none',borderRadius:'4px',padding:'4px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:'4px',fontSize:'11px',fontWeight:500},title:"Print Manifest"},"\uD83D\uDDA8 Print"),/*#__PURE__*/React.createElement("button",{onClick:()=>{// Generate image summary for the selected date
+                  `;const popup=window.open('','_blank','width=1100,height=800');if(!popup){alert('Pop-up blocked. Please allow pop-ups for this site to print.');return;}popup.document.write(manifestHTML);popup.document.close();popup.onload=()=>popup.print();},style:{background:'#333',color:'white',border:'none',borderRadius:'4px',padding:'4px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:'4px',fontSize:'11px',fontWeight:500},title:"Print Manifest"},"\uD83D\uDDA8 Print"),/*#__PURE__*/React.createElement("button",{onClick:()=>{// Generate image summary for the selected date
 const dateObj=new Date(selectedDate+'T12:00:00');const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];const dayName=dayNames[dateObj.getDay()];const dateDisplay=`${dayName}, ${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${dateObj.getFullYear()}`;// Check if any routes are not confirmed
 const unconfirmedRoutesSummary=routes.filter(r=>!r.confirmed);const hasUnconfirmedSummary=unconfirmedRoutesSummary.length>0;let grandTotalPallets=0;let grandTotalStores=0;let grandTotalTruckSpots=0;let grandTotalLinked=0;let grandTotalCases=0;let grandHasPending=false;const grandTotalByType={};const grandCasesByType={};const grandHasPendingByType={};palletTypes.forEach(pt=>{grandTotalByType[pt.abbrev]=0;grandCasesByType[pt.abbrev]=0;grandHasPendingByType[pt.abbrev]=false;});// Build HTML for each route
 let routesHTML='';routes.forEach((route,rIdx)=>{const driverRoutes=routes.filter(r=>r.driver===route.driver);const routeNum=driverRoutes.indexOf(route)+1;const routeName=route.driver?`${route.driver} #${routeNum}`:`Route #${rIdx+1}`;// First pass: find which types are used and calculate cases
@@ -996,7 +996,7 @@ const grandActiveTypes=palletTypes.filter(pt=>grandTotalByType[pt.abbrev]>0);con
                       </div>
                     </body>
                     </html>
-                  `;const popup=window.open('','_blank','width=520,height=800');popup.document.write(imageHTML);popup.document.close();// Inject data for Excel export
+                  `;const popup=window.open('','_blank','width=520,height=800');if(!popup){alert('Pop-up blocked. Please allow pop-ups for this site.');return;}popup.document.write(imageHTML);popup.document.close();// Inject data for Excel export
 const exportData=routes.map(route=>{const driverRoutes=routes.filter(r=>r.driver===route.driver);const routeNum=driverRoutes.indexOf(route)+1;const routeName=route.driver?route.driver+' #'+routeNum:'Route #'+(routes.indexOf(route)+1);return{name:routeName,truck:route.truck||'TBD',trailer:route.trailer||'',stores:route.stores.map(store=>{const dirStore=storesDirectory.find(ds=>String(ds.code||'').trim()===String(store.code||'').trim());const storeName=dirStore?.name||store.name||'';const types=store.palletTypes||[];const links=store.palletLinks||[];const casesByType={};let storePallets=0;let linkedCount=0;(store.pallets||[]).forEach((p,pIdx)=>{if(p&&typeof p==='number'&&p>0||p==='?'){storePallets++;if(links[pIdx])linkedCount++;const pType=types[pIdx]||'FZ';const normalized=pType==='F'?'FZ':pType==='D'?'DR':pType==='S'?'SP':pType;if(!casesByType[normalized])casesByType[normalized]=[];casesByType[normalized].push(p==='?'?'PLT':p);}});return{code:store.code,name:storeName,casesByType,pallets:storePallets,truckSpots:storePallets-linkedCount,hasMerged:linkedCount>0};})};});popup.routeData=exportData;popup.palletTypesList=palletTypes.map(pt=>pt.abbrev);popup.dateStr=dateDisplay;},style:{background:'#007AFF',color:'white',border:'none',borderRadius:'4px',padding:'4px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:'4px',fontSize:'11px',fontWeight:500},title:"Route Summary"},"\uD83D\uDCCA Summary"),/*#__PURE__*/React.createElement("button",{onClick:()=>{// Generate Excel/CSV for the selected date
 const dateObj=new Date(selectedDate+'T12:00:00');const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];const dayName=dayNames[dateObj.getDay()];const dateDisplay=`${dayName} ${dateObj.getMonth()+1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;// Get all active pallet types across all routes
 const allActiveTypes=new Set();routes.forEach(route=>{route.stores.forEach(store=>{const types=store.palletTypes||[];(store.pallets||[]).forEach((p,pIdx)=>{if(p&&typeof p==='number'&&p>0||p==='?'){const pType=types[pIdx]||palletTypes[0]?.abbrev||'FZ';const normalized=pType==='F'?'FZ':pType==='D'?'DR':pType==='S'?'SP':pType;allActiveTypes.add(normalized);}});});});const activeTypesList=palletTypes.filter(pt=>allActiveTypes.has(pt.abbrev));// Build CSV content
