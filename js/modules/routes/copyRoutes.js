@@ -19,9 +19,13 @@ export function createCopyRoutesFromDateHandler({
       keepDrivers = false,
       keepTrucks = false,
       clearPallets = true,
+      copyEverything = false,
       replaceExisting = false,
       sourceRoutes: sourceRoutesOverride = null
     } = options;
+    const shouldKeepDrivers = copyEverything || keepDrivers;
+    const shouldKeepTrucks = copyEverything || keepTrucks;
+    const shouldClearPallets = copyEverything ? false : clearPallets;
 
     const currentRoutes = routesByDate[selectedDate] || [];
     if (currentRoutes.length > 0 && !replaceExisting) {
@@ -56,32 +60,56 @@ export function createCopyRoutesFromDateHandler({
       return;
     }
 
-    const copiedRoutes = sourceRoutes.map((route, idx) => ({
-      ...route,
-      id: generateUUID(),
-      route_order: idx,
-      driver: keepDrivers ? route.driver : '',
-      truck: keepTrucks ? route.truck : '',
-      trailer: keepTrucks ? route.trailer : '',
-      confirmed: false,
-      confirmedBy: null,
-      confirmedAt: null,
-      palletCount: 8,
-      stores: route.stores.map((store, sIdx) => ({
-        ...store,
-        id: crypto.randomUUID(),
-        pallets: clearPallets ? ['', '', '', '', '', '', '', ''] : [...(store.pallets || [])],
-        palletTypes: clearPallets
-          ? ['FZ', 'FZ', 'FZ', 'FZ', 'FZ', 'FZ', 'DR', 'FH']
-          : [...(store.palletTypes || ['FZ', 'FZ', 'FZ', 'FZ', 'FZ', 'FZ', 'DR', 'FH'])],
-        palletLinks: [false, false, false, false, false, false, false, false],
-        cases: clearPallets ? ['', '', '', '', '', '', '', ''] : [...(store.cases || [])],
-        tc: clearPallets ? 0 : store.tc || 0,
-        notes: '',
-        internalNotes: '',
-        driverNotes: ''
-      }))
-    }));
+    const copiedRoutes = sourceRoutes.map((route, idx) => {
+      const palletCount = route.palletCount || route.pallet_count || 8;
+
+      return {
+        ...route,
+        id: generateUUID(),
+        route_order: idx,
+        driver: shouldKeepDrivers ? route.driver : '',
+        truck: shouldKeepTrucks ? route.truck : '',
+        trailer: shouldKeepTrucks ? route.trailer : '',
+        confirmed: false,
+        confirmedBy: null,
+        confirmedAt: null,
+        palletCount,
+        stores: (route.stores || []).map((store) => {
+          const sourcePallets = Array.isArray(store.pallets) ? store.pallets : [];
+          const sourceCases = Array.isArray(store.cases) ? store.cases : [];
+          const sourcePalletTypes = Array.isArray(store.palletTypes) ? store.palletTypes : [];
+          const sourcePalletLinks = Array.isArray(store.palletLinks) ? store.palletLinks : [];
+          const columnCount = Math.max(
+            palletCount,
+            sourcePallets.length,
+            sourcePalletTypes.length,
+            sourcePalletLinks.length,
+            sourceCases.length
+          );
+
+          return {
+            ...store,
+            id: crypto.randomUUID(),
+            pallets: shouldClearPallets
+              ? Array(columnCount).fill('')
+              : [...sourcePallets],
+            palletTypes: sourcePalletTypes.length > 0
+              ? [...sourcePalletTypes]
+              : Array(columnCount).fill('FZ'),
+            palletLinks: sourcePalletLinks.length > 0
+              ? [...sourcePalletLinks]
+              : Array(columnCount).fill(false),
+            cases: shouldClearPallets
+              ? Array(columnCount).fill('')
+              : [...sourceCases],
+            tc: shouldClearPallets ? 0 : store.tc || 0,
+            notes: store.notes || '',
+            internalNotes: store.internalNotes || '',
+            driverNotes: store.driverNotes || ''
+          };
+        })
+      };
+    });
 
     hasPendingChanges.current = true;
     setRoutesByDate((prev) => ({
@@ -103,9 +131,13 @@ export function createCopyRoutesFromDateHandler({
 
     const totalStores = copiedRoutes.reduce((sum, r) => sum + r.stores.length, 0);
     const optionsUsed = [];
-    if (keepDrivers) optionsUsed.push('Driver assignments kept');
-    if (keepTrucks) optionsUsed.push('Truck/trailer assignments kept');
-    if (!clearPallets) optionsUsed.push('Pallet counts copied');
+    if (copyEverything) optionsUsed.push('Everything copied including notes');
+    else {
+      if (shouldKeepDrivers) optionsUsed.push('Driver assignments kept');
+      if (shouldKeepTrucks) optionsUsed.push('Truck/trailer assignments kept');
+      if (!shouldClearPallets) optionsUsed.push('Pallet counts copied');
+      optionsUsed.push('Notes copied');
+    }
 
     setInfoModal({
       type: 'success',
@@ -128,7 +160,7 @@ export function createCopyRoutesFromDateHandler({
       note:
         optionsUsed.length > 0
           ? `✓ ${optionsUsed.join(' • ')}`
-          : '📋 Stores copied with fresh pallet counts. Notes were cleared.'
+          : '📋 Stores copied with fresh pallet counts and notes.'
     });
   };
 }

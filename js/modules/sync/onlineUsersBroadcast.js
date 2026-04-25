@@ -286,9 +286,23 @@ export const setupOnlineUsersBroadcast = ({
       return true;
     },
     cleanup: () => {
+      const channelToRemove = channel;
       disposed = true;
-      announceLeave();
-      removeChannel();
+      clearHeartbeatInterval();
+      clearPruneInterval();
+
+      const removeAfterLeave = () => {
+        if (channel === channelToRemove) {
+          removeChannel();
+        } else if (channelToRemove) {
+          supabase.removeChannel(channelToRemove);
+        }
+      };
+
+      Promise.race([
+        announceLeave(),
+        new Promise((resolve) => setTimeout(resolve, 1000)),
+      ]).finally(removeAfterLeave);
     },
     isSubscribed: () => subscribed,
   };

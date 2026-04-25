@@ -66,6 +66,25 @@ export const setupDateRoutesSync = ({
   let isDisposed = false;
   let activeDate = selectedDate;
   let activeChannel = null;
+  const serverUpdateExitTimers = new Set();
+
+  const scheduleExitServerUpdate = (delayMs = 300) => {
+    const timerId = setTimeout(() => {
+      serverUpdateExitTimers.delete(timerId);
+      if (isDisposed) return;
+      try {
+        exitServerUpdate();
+      } catch (err) {
+        console.error('exitServerUpdate failed:', err);
+      }
+    }, delayMs);
+    serverUpdateExitTimers.add(timerId);
+  };
+
+  const clearServerUpdateExitTimers = () => {
+    serverUpdateExitTimers.forEach((timerId) => clearTimeout(timerId));
+    serverUpdateExitTimers.clear();
+  };
 
   const removeRoutesChannel = () => {
     const channelToRemove = activeChannel || routesSubscriptionRef.current;
@@ -196,7 +215,7 @@ export const setupDateRoutesSync = ({
                 return updated;
               });
             } finally {
-              setTimeout(() => exitServerUpdate(), 300);
+              scheduleExitServerUpdate(300);
             }
           }
 
@@ -216,7 +235,7 @@ export const setupDateRoutesSync = ({
                 return updated;
               });
             } finally {
-              setTimeout(() => exitServerUpdate(), 300);
+              scheduleExitServerUpdate(300);
             }
           }
         }
@@ -252,6 +271,7 @@ export const setupDateRoutesSync = ({
     if (typeof onReconnectReady === 'function') {
       onReconnectReady(null);
     }
+    clearServerUpdateExitTimers();
     removeRoutesChannel();
   };
 };
