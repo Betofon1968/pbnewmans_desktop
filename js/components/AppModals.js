@@ -10,6 +10,8 @@ export default function AppModals({
   setStoreChangeConfirmModal,
   infoModal,
   setInfoModal,
+  pastDatePrintModal,
+  setPastDatePrintModal,
 }) {
   return /*#__PURE__*/ React.createElement(
     React.Fragment,
@@ -472,6 +474,146 @@ export default function AppModals({
                 onMouseOut: (e) => (e.target.style.transform = 'translateY(0)'),
               },
               'OK'
+            )
+          )
+        )
+      ),
+    pastDatePrintModal &&
+      /*#__PURE__*/ React.createElement(
+        'div',
+        {
+          style: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10003,
+          },
+        },
+        /*#__PURE__*/ React.createElement(
+          'div',
+          { style: { background: 'white', borderRadius: '16px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', width: '460px', overflow: 'hidden', animation: 'fadeIn 0.2s ease-out' } },
+          /*#__PURE__*/ React.createElement(
+            'div',
+            { style: { background: 'linear-gradient(135deg, #fb8c00 0%, #ef6c00 100%)', padding: '24px', textAlign: 'center' } },
+            /*#__PURE__*/ React.createElement(
+              'div',
+              { style: { width: '64px', height: '64px', background: 'rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '32px' } },
+              '⚠️'
+            ),
+            /*#__PURE__*/ React.createElement(
+              'h3',
+              { style: { margin: 0, color: 'white', fontSize: '20px', fontWeight: 600 } },
+              'Print ',
+              pastDatePrintModal.kind,
+              ' for a Past Date?'
+            )
+          ),
+          /*#__PURE__*/ React.createElement(
+            'div',
+            { style: { padding: '24px', textAlign: 'center' } },
+            /*#__PURE__*/ React.createElement(
+              'p',
+              { style: { margin: '0 0 16px', color: '#333', fontSize: '15px' } },
+              'You are about to print a ',
+              /*#__PURE__*/ React.createElement('strong', null, pastDatePrintModal.kind),
+              ' for:'
+            ),
+            /*#__PURE__*/ React.createElement(
+              'div',
+              { style: { background: '#fff3e0', padding: '14px 20px', borderRadius: '8px', margin: '0 0 12px', border: '2px solid #ffb74d', textAlign: 'center' } },
+              /*#__PURE__*/ React.createElement(
+                'div',
+                { style: { fontSize: '11px', color: '#e65100', fontWeight: 700, marginBottom: '4px', letterSpacing: '0.5px' } },
+                'SELECTED DATE'
+              ),
+              /*#__PURE__*/ React.createElement(
+                'div',
+                { style: { fontSize: '17px', fontWeight: 700, color: '#bf360c' } },
+                pastDatePrintModal.selectedDateLabel
+              )
+            ),
+            /*#__PURE__*/ React.createElement(
+              'div',
+              { style: { background: '#ffebee', padding: '10px 16px', borderRadius: '8px', margin: '0 0 12px', border: '1px solid #ef9a9a', textAlign: 'center' } },
+              /*#__PURE__*/ React.createElement(
+                'div',
+                { style: { fontSize: '14px', color: '#c62828', fontWeight: 700 } },
+                pastDatePrintModal.daysAgo,
+                ' ',
+                pastDatePrintModal.daysAgo === 1 ? 'day' : 'days',
+                ' in the past'
+              )
+            ),
+            /*#__PURE__*/ React.createElement(
+              'p',
+              { style: { margin: '12px 0 0', color: '#666', fontSize: '13px' } },
+              'Today is ',
+              /*#__PURE__*/ React.createElement('strong', null, pastDatePrintModal.todayLabel),
+              '.'
+            ),
+            /*#__PURE__*/ React.createElement(
+              'p',
+              { style: { margin: '12px 0 0', color: '#888', fontSize: '12px', fontStyle: 'italic' } },
+              'Tip: cancel and use the calendar to switch to today before printing.'
+            )
+          ),
+          /*#__PURE__*/ React.createElement(
+            'div',
+            { style: { display: 'flex', gap: '12px', padding: '16px 24px 24px', justifyContent: 'center' } },
+            /*#__PURE__*/ React.createElement(
+              'button',
+              {
+                onClick: () => {
+                  if (pastDatePrintModal.onCancel) pastDatePrintModal.onCancel();
+                  setPastDatePrintModal(null);
+                },
+                style: {
+                  flex: 1,
+                  padding: '14px 24px',
+                  border: '2px solid #ddd',
+                  borderRadius: '8px',
+                  background: 'white',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: '#666',
+                  transition: 'all 0.2s',
+                },
+                onMouseOver: (e) => (e.target.style.background = '#f5f5f5'),
+                onMouseOut: (e) => (e.target.style.background = 'white'),
+              },
+              'Cancel'
+            ),
+            /*#__PURE__*/ React.createElement(
+              'button',
+              {
+                onClick: () => {
+                  if (pastDatePrintModal.onConfirm) pastDatePrintModal.onConfirm();
+                  setPastDatePrintModal(null);
+                },
+                style: {
+                  flex: 1,
+                  padding: '14px 24px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #fb8c00 0%, #ef6c00 100%)',
+                  cursor: 'pointer',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: 'white',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 4px 12px rgba(251, 140, 0, 0.4)',
+                },
+                onMouseOver: (e) => (e.target.style.transform = 'translateY(-2px)'),
+                onMouseOut: (e) => (e.target.style.transform = 'translateY(0)'),
+              },
+              '🖨 Print Anyway'
             )
           )
         )

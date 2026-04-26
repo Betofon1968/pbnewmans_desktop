@@ -13,6 +13,7 @@ export const createOverviewTabProps = (scope) => ({
   driversDirectory: scope.driversDirectory,
   expandedRoutes: scope.expandedRoutes,
   generateBOL: scope.generateBOL,
+  setPastDatePrintModal: scope.setPastDatePrintModal,
   handlePalletFocus: scope.handlePalletFocus,
   logPalletChange: scope.logPalletChange,
   moveRoute: scope.moveRoute,

@@ -21,6 +21,7 @@ export function useAppModals({ React }) {
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
   const [copyRoutesModal, setCopyRoutesModal] = useState(null);
   const [versionMismatch, setVersionMismatch] = useState(null);
+  const [pastDatePrintModal, setPastDatePrintModal] = useState(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -90,6 +91,8 @@ export function useAppModals({ React }) {
     copyRoutesModal,
     setCopyRoutesModal,
     versionMismatch,
-    setVersionMismatch
+    setVersionMismatch,
+    pastDatePrintModal,
+    setPastDatePrintModal
   };
 }
