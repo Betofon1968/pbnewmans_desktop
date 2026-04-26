@@ -105,7 +105,7 @@ export function createRouteMutationsHandlers({
     const routeNum = driverRoutes.indexOf(route) + 1;
     const routeName = route?.driver ? `${route.driver} #${routeNum}` : `Route #${routeId}`;
 
-    if (['driver', 'truck', 'trailer'].includes(field) && oldValue !== value) {
+    if (['driver', 'truck', 'trailer', 'pickupAtPB'].includes(field) && oldValue !== value) {
       pushUndo(`${field} change on ${routeName}`, routeId, routes);
     }
 
@@ -133,6 +133,8 @@ export function createRouteMutationsHandlers({
     const routeNum = driverRoutes.indexOf(route) + 1;
     const routeName = route?.driver ? route.driver + ' #' + routeNum : 'Route #' + routeNum;
     const isConfirming = !route?.confirmed;
+
+    pushUndo(`${isConfirming ? 'Confirm' : 'Unconfirm'} ${routeName}`, routeId, routes);
 
     setRoutes((prev) =>
       prev.map((r) => {

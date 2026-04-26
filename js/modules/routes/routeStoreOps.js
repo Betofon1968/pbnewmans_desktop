@@ -8,6 +8,13 @@ export function createRouteStoreOpsHandlers({
   hasPendingChanges,
   markFieldDirty
 }) {
+  const getRouteName = (route, routeId) => {
+    if (!route) return `Route #${routeId}`;
+    const driverRoutes = routes.filter((r) => r.driver === route.driver);
+    const routeNum = driverRoutes.indexOf(route) + 1;
+    return route.driver ? `${route.driver} #${routeNum}` : `Route #${routeNum || routeId}`;
+  };
+
   const addStore = (routeId) => {
     hasPendingChanges.current = true;
 
@@ -88,19 +95,21 @@ export function createRouteStoreOpsHandlers({
 
   const moveRoute = (routeId, direction) => {
     console.log('📦 moveRoute called:', routeId, direction);
+    const index = routes.findIndex((r) => r.id === routeId);
+    if (index === -1) {
+      console.log('📦 Route not found:', routeId);
+      return;
+    }
+    if ((direction === 'up' && index === 0) || (direction === 'down' && index === routes.length - 1)) {
+      console.log('📦 Cannot move further:', direction);
+      return;
+    }
+
     hasPendingChanges.current = true;
+    pushUndo(`Move ${getRouteName(routes[index], routeId)} ${direction}`, routeId, routes);
+
     setRoutes((prev) => {
       const routesCopy = [...prev];
-      const index = routesCopy.findIndex((r) => r.id === routeId);
-      if (index === -1) {
-        console.log('📦 Route not found:', routeId);
-        return prev;
-      }
-      if ((direction === 'up' && index === 0) || (direction === 'down' && index === routesCopy.length - 1)) {
-        console.log('📦 Cannot move further:', direction);
-        return prev;
-      }
-
       const newIndex = direction === 'up' ? index - 1 : index + 1;
       [routesCopy[index], routesCopy[newIndex]] = [routesCopy[newIndex], routesCopy[index]];
 
@@ -116,7 +125,19 @@ export function createRouteStoreOpsHandlers({
   };
 
   const moveStore = (routeId, storeId, direction) => {
+    const route = routes.find((r) => r.id === routeId);
+    const stores = route?.stores || [];
+    const index = stores.findIndex((s) => s.id === storeId);
+    if (!route || index === -1) return;
+    if ((direction === 'up' && index === 0) || (direction === 'down' && index === stores.length - 1)) return;
+
+    const store = stores[index];
+    const storeName = `${store.code || ''} ${store.name || ''}`.trim() || `Store ${storeId}`;
+
     hasPendingChanges.current = true;
+    markFieldDirty(routeId, 'stores');
+    pushUndo(`Move ${storeName} ${direction}`, routeId, routes);
+
     setRoutes((prev) =>
       prev.map((route) => {
         if (route.id !== routeId) return route;

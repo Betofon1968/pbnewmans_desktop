@@ -1,6 +1,21 @@
-export function createPalletOpsHandlers({ setRoutes, MIN_PALLETS, MAX_PALLETS }) {
+export function createPalletOpsHandlers({ routes, setRoutes, pushUndo, markFieldDirty, MIN_PALLETS, MAX_PALLETS }) {
+  const getRouteName = (route, routeId) => {
+    if (!route) return `Route #${routeId}`;
+    const driverRoutes = routes.filter((r) => r.driver === route.driver);
+    const routeNum = driverRoutes.indexOf(route) + 1;
+    return route.driver ? `${route.driver} #${routeNum}` : `Route #${routeNum || routeId}`;
+  };
+
   const sortStorePalletsByType = (routeId, storeId, palletTypesConfig) => {
     if (!palletTypesConfig || palletTypesConfig.length === 0) return;
+
+    const route = routes.find((r) => r.id === routeId);
+    const store = route?.stores?.find((s) => s.id === storeId);
+    if (!route || !store) return;
+
+    const storeName = `${store.code || ''} ${store.name || ''}`.trim() || `Store ${storeId}`;
+    pushUndo(`Sort pallets on ${storeName}`, routeId, routes);
+    markFieldDirty(routeId, 'stores');
 
     setRoutes((prev) =>
       prev.map((route) => {
@@ -53,6 +68,13 @@ export function createPalletOpsHandlers({ setRoutes, MIN_PALLETS, MAX_PALLETS })
   };
 
   const addPalletColumn = (routeId) => {
+    const route = routes.find((r) => r.id === routeId);
+    if (!route || route.palletCount >= MAX_PALLETS) return;
+
+    pushUndo(`Add pallet column on ${getRouteName(route, routeId)}`, routeId, routes);
+    markFieldDirty(routeId, 'palletCount');
+    markFieldDirty(routeId, 'stores');
+
     setRoutes((prev) =>
       prev.map((route) => {
         if (route.id !== routeId) return route;
@@ -87,22 +109,29 @@ export function createPalletOpsHandlers({ setRoutes, MIN_PALLETS, MAX_PALLETS })
   };
 
   const removePalletColumn = (routeId) => {
+    const route = routes.find((r) => r.id === routeId);
+    if (!route || route.palletCount <= MIN_PALLETS) return;
+
+    const lastColumnIndex = route.palletCount - 1;
+    const lastColumnHasData = route.stores.some((store) => {
+      const pallets = store.pallets || [];
+      const val = pallets[lastColumnIndex];
+      return (val && typeof val === 'number' && val > 0) || val === '?';
+    });
+
+    if (lastColumnHasData) {
+      alert('Cannot remove column - it contains data. Clear the values first.');
+      return;
+    }
+
+    pushUndo(`Remove pallet column on ${getRouteName(route, routeId)}`, routeId, routes);
+    markFieldDirty(routeId, 'palletCount');
+    markFieldDirty(routeId, 'stores');
+
     setRoutes((prev) =>
       prev.map((route) => {
         if (route.id !== routeId) return route;
         if (route.palletCount <= MIN_PALLETS) return route;
-
-        const lastColumnIndex = route.palletCount - 1;
-        const lastColumnHasData = route.stores.some((store) => {
-          const pallets = store.pallets || [];
-          const val = pallets[lastColumnIndex];
-          return (val && typeof val === 'number' && val > 0) || val === '?';
-        });
-
-        if (lastColumnHasData) {
-          alert('Cannot remove column - it contains data. Clear the values first.');
-          return route;
-        }
 
         const newCount = route.palletCount - 1;
         return {
