@@ -26,6 +26,10 @@ export function createCopyRoutesFromDateHandler({
     const shouldKeepDrivers = copyEverything || keepDrivers;
     const shouldKeepTrucks = copyEverything || keepTrucks;
     const shouldClearPallets = copyEverything ? false : clearPallets;
+    // Notes (store-level) and pickupAtPB (route-level) are only carried over
+    // when "Copy everything including notes" is on. Otherwise they reset.
+    const shouldKeepNotes = copyEverything;
+    const shouldKeepPickupAtPB = copyEverything;
 
     const currentRoutes = routesByDate[selectedDate] || [];
     if (currentRoutes.length > 0 && !replaceExisting) {
@@ -73,39 +77,39 @@ export function createCopyRoutesFromDateHandler({
         confirmed: false,
         confirmedBy: null,
         confirmedAt: null,
+        pickupAtPB: shouldKeepPickupAtPB ? !!route.pickupAtPB : false,
         palletCount,
         stores: (route.stores || []).map((store) => {
           const sourcePallets = Array.isArray(store.pallets) ? store.pallets : [];
-          const sourceCases = Array.isArray(store.cases) ? store.cases : [];
           const sourcePalletTypes = Array.isArray(store.palletTypes) ? store.palletTypes : [];
           const sourcePalletLinks = Array.isArray(store.palletLinks) ? store.palletLinks : [];
           const columnCount = Math.max(
             palletCount,
             sourcePallets.length,
             sourcePalletTypes.length,
-            sourcePalletLinks.length,
-            sourceCases.length
+            sourcePalletLinks.length
           );
 
           return {
             ...store,
             id: crypto.randomUUID(),
             pallets: shouldClearPallets
-              ? Array(columnCount).fill('')
+              ? Array(columnCount).fill(null)
               : [...sourcePallets],
             palletTypes: sourcePalletTypes.length > 0
               ? [...sourcePalletTypes]
               : Array(columnCount).fill('FZ'),
-            palletLinks: sourcePalletLinks.length > 0
-              ? [...sourcePalletLinks]
-              : Array(columnCount).fill(false),
-            cases: shouldClearPallets
-              ? Array(columnCount).fill('')
-              : [...sourceCases],
+            // When clearing pallet counts, also clear merge indicators —
+            // empty cells should never display "linked to previous".
+            palletLinks: shouldClearPallets
+              ? Array(columnCount).fill(false)
+              : sourcePalletLinks.length > 0
+                ? [...sourcePalletLinks]
+                : Array(columnCount).fill(false),
             tc: shouldClearPallets ? 0 : store.tc || 0,
-            notes: store.notes || '',
-            internalNotes: store.internalNotes || '',
-            driverNotes: store.driverNotes || ''
+            notes: shouldKeepNotes ? (store.notes || '') : '',
+            internalNotes: shouldKeepNotes ? (store.internalNotes || '') : '',
+            driverNotes: shouldKeepNotes ? (store.driverNotes || '') : ''
           };
         })
       };
@@ -131,12 +135,14 @@ export function createCopyRoutesFromDateHandler({
 
     const totalStores = copiedRoutes.reduce((sum, r) => sum + r.stores.length, 0);
     const optionsUsed = [];
-    if (copyEverything) optionsUsed.push('Everything copied including notes');
-    else {
+    if (copyEverything) {
+      optionsUsed.push('Everything copied including notes & flags');
+    } else {
       if (shouldKeepDrivers) optionsUsed.push('Driver assignments kept');
       if (shouldKeepTrucks) optionsUsed.push('Truck/trailer assignments kept');
       if (!shouldClearPallets) optionsUsed.push('Pallet counts copied');
-      optionsUsed.push('Notes copied');
+      else optionsUsed.push('Pallet counts cleared');
+      optionsUsed.push('Notes cleared');
     }
 
     setInfoModal({
